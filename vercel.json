@@ -3,12 +3,5 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["icn1"],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",
-    "NEXT_PUBLIC_API_BASE_URL": "@api-base-url",
-    "NEXT_PUBLIC_PORTONE_USER_CODE": "@portone-user-code",
-    "NEXT_PUBLIC_KAKAO_MAP_KEY": "@kakao-map-key"
-  }
+  "regions": ["icn1"]
 }
