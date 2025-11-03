@@ -356,11 +356,11 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
                   {quote.total_price.toLocaleString()}원
                 </div>
                 <div className="text-sm text-muted-foreground space-y-1 text-center">
-                  <p>거리: {quote.distance_km}km • 소요: {quote.estimated_hours}시간</p>
+                  <p>거리: {quote.distance_km.toLocaleString()}km • 소요: {quote.estimated_hours.toLocaleString()}시간</p>
                   <p>{quote.vehicle_type_display} • {quote.season_display}</p>
                   {quote.is_multi_vehicle && (
                     <p className="text-orange-600 font-medium">
-                      {quote.vehicle_count}대 차량 필요
+                      {quote.vehicle_count.toLocaleString()}대 차량 필요
                     </p>
                   )}
                 </div>

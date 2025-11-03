@@ -305,8 +305,8 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                     </div>
                   </div>
                   <div className="text-sm space-y-1">
-                    <p>거리: {selectedReservation.quote.distance_km}km</p>
-                    <p>예상 소요시간: {selectedReservation.quote.estimated_hours}시간</p>
+                    <p>거리: {selectedReservation.quote.distance_km.toLocaleString()}km</p>
+                    <p>예상 소요시간: {selectedReservation.quote.estimated_hours.toLocaleString()}시간</p>
                   </div>
                   <div className="border-t pt-3 mt-3 space-y-2 text-sm">
                     <div className="flex justify-between">
