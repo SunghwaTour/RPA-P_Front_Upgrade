@@ -1,22 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, MapPin, Calendar, Users, Bus, Calculator } from "lucide-react"
+import { ArrowLeft, MapPin, Calendar, Users, Bus, Calculator, Map } from "lucide-react"
 import { getQuote, createReservation } from "@/lib/api"
+import { KakaoMapModal } from "@/components/kakao-map-modal"
 import type { QuoteResponse, CreateReservationRequest } from "@/types"
 
 interface ReservationFormCompleteProps {
   onBack: () => void
-}
-
-declare global {
-  interface Window {
-    kakao: any
-  }
 }
 
 export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps) {
@@ -40,18 +35,10 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showQuote, setShowQuote] = useState(false)
-
-  // 카카오맵 스크립트 로드
-  useEffect(() => {
-    const script = document.createElement("script")
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`
-    script.async = true
-    document.head.appendChild(script)
-
-    return () => {
-      document.head.removeChild(script)
-    }
-  }, [])
+  const [mapModal, setMapModal] = useState<{
+    isOpen: boolean
+    type: "departure" | "destination"
+  }>({ isOpen: false, type: "departure" })
 
   // 견적 계산
   const handleCalculateQuote = async () => {
@@ -171,14 +158,29 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
               <MapPin className="w-5 h-5 text-green-600" />
               출발지
             </Label>
-            <Input
-              placeholder="출발지를 입력하세요"
-              value={formData.departure_location}
-              onChange={(e) =>
-                setFormData({ ...formData, departure_location: e.target.value })
-              }
-              className="h-12 text-base"
-            />
+            <div className="relative">
+              <Input
+                placeholder="지도에서 출발지를 선택하세요"
+                value={formData.departure_location}
+                readOnly
+                onClick={() => setMapModal({ isOpen: true, type: "departure" })}
+                className="h-12 text-base cursor-pointer bg-white pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setMapModal({ isOpen: true, type: "departure" })}
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
+              >
+                <Map className="w-5 h-5" />
+              </Button>
+            </div>
+            {formData.departure_location && (
+              <p className="text-xs text-gray-500 mt-1">
+                좌표: {formData.departure_coordinates}
+              </p>
+            )}
           </Card>
 
           {/* 도착지 */}
@@ -187,14 +189,29 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
               <MapPin className="w-5 h-5 text-red-600" />
               도착지
             </Label>
-            <Input
-              placeholder="도착지를 입력하세요"
-              value={formData.destination_location}
-              onChange={(e) =>
-                setFormData({ ...formData, destination_location: e.target.value })
-              }
-              className="h-12 text-base"
-            />
+            <div className="relative">
+              <Input
+                placeholder="지도에서 도착지를 선택하세요"
+                value={formData.destination_location}
+                readOnly
+                onClick={() => setMapModal({ isOpen: true, type: "destination" })}
+                className="h-12 text-base cursor-pointer bg-white pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setMapModal({ isOpen: true, type: "destination" })}
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-red-600 hover:text-red-700"
+              >
+                <Map className="w-5 h-5" />
+              </Button>
+            </div>
+            {formData.destination_location && (
+              <p className="text-xs text-gray-500 mt-1">
+                좌표: {formData.destination_coordinates}
+              </p>
+            )}
           </Card>
 
           {/* 출발 날짜 및 시간 */}
@@ -396,6 +413,29 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
           </ul>
         </Card>
       </main>
+
+      {/* 카카오맵 모달 */}
+      <KakaoMapModal
+        isOpen={mapModal.isOpen}
+        onClose={() => setMapModal({ ...mapModal, isOpen: false })}
+        onSelectLocation={(address, coordinates) => {
+          if (mapModal.type === "departure") {
+            setFormData({
+              ...formData,
+              departure_location: address,
+              departure_coordinates: coordinates,
+            })
+          } else {
+            setFormData({
+              ...formData,
+              destination_location: address,
+              destination_coordinates: coordinates,
+            })
+          }
+          setMapModal({ ...mapModal, isOpen: false })
+        }}
+        title={mapModal.type === "departure" ? "출발지 선택" : "도착지 선택"}
+      />
     </div>
   )
 }

@@ -32,7 +32,7 @@ npm run lint
 - **Authentication**: Supabase Auth (Google, Kakao OAuth) ✅
 - **Payment**: PortOne (구 아임포트) ✅
 - **HTTP Client**: Axios ✅
-- **Maps**: 카카오맵 API (planned)
+- **Maps**: 카카오맵 API ✅
 
 ## Architecture
 
@@ -45,6 +45,7 @@ The project uses **shadcn/ui** components with Radix UI primitives and Tailwind 
   - `login-screen.tsx`: OAuth login UI (Supabase integrated) ✅
   - `main-screen.tsx`: Authenticated home screen with navigation ✅
   - `reservation-form-complete.tsx`: Full bus booking form with quote API ✅
+  - `kakao-map-modal.tsx`: Kakao Map integration with place search ✅
   - `my-reservations-complete.tsx`: Reservation list with filtering ✅
   - `payment-page.tsx`: PortOne payment integration ✅
 - **Styling**: Tailwind CSS v4 with custom King Bus brand colors in `app/globals.css`
@@ -207,6 +208,11 @@ When creating new components:
 
 - Google/Kakao OAuth login via Supabase
 - Real-time authentication state management
+- Kakao Map integration for location selection
+  - Place/address search with autocomplete
+  - Interactive map with marker placement
+  - Geocoding and reverse geocoding
+  - Current location detection
 - Reservation creation with quote calculation
 - Reservation list with status filtering
 - Reservation detail view and cancellation
@@ -217,10 +223,10 @@ When creating new components:
 
 ### 🚧 Planned Features
 
-- Kakao Maps integration for location selection
 - Payment history page
 - Push notifications
 - Admin panel integration
+- Real-time reservation status updates
 
 ## Troubleshooting
 
