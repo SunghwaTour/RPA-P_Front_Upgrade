@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Bus, Calendar, Users, MapPin, X, CreditCard } from "lucide-react"
-import { getReservations, getReservation, cancelReservation, initiatePayment } from "@/lib/api"
+import { getReservations, getReservation, cancelReservation, initiatePayment, verifyPayment } from "@/lib/api"
+import { loadPortOneScript, initPortOne, requestPortOnePayment, type PortOnePaymentRequest } from "@/lib/portone"
 import type { Reservation, ReservationStatus } from "@/types"
 
 interface MyReservationsCompleteProps {
@@ -89,14 +90,53 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
 
   const handlePayment = async (reservationId: number) => {
     try {
+      // 1. PortOne SDK 로드
+      await loadPortOneScript()
+      const userCode = process.env.NEXT_PUBLIC_PORTONE_USER_CODE
+      if (!userCode) {
+        throw new Error("PortOne 설정이 누락되었습니다")
+      }
+      initPortOne(userCode)
+
+      // 2. 결제 정보 가져오기
       const paymentData = await initiatePayment(reservationId)
 
-      // PortOne 결제 창 열기 (실제 구현은 별도 필요)
-      alert(`결제 금액: ${Number(paymentData.deposit_amount).toLocaleString()}원\n\nPortOne 결제 기능은 추가 구현이 필요합니다.`)
+      // 3. PortOne 결제 요청
+      const paymentRequest: PortOnePaymentRequest = {
+        pg: paymentData.payment_config.pg,
+        pay_method: paymentData.payment_config.pay_method,
+        merchant_uid: paymentData.payment_config.merchant_uid,
+        name: paymentData.payment_config.name,
+        amount: paymentData.payment_config.amount,
+        buyer_email: paymentData.payment_config.buyer_email,
+        buyer_name: paymentData.payment_config.buyer_name,
+        buyer_tel: paymentData.payment_config.buyer_tel,
+        m_redirect_url: `${window.location.origin}/payment/complete`,
+      }
 
-      // TODO: PortOne SDK 연동
+      const response = await requestPortOnePayment(paymentRequest)
+
+      // 4. 결제 결과 처리
+      if (response.success && response.imp_uid && response.merchant_uid) {
+        // 서버에서 결제 검증
+        const verifyResult = await verifyPayment({
+          imp_uid: response.imp_uid,
+          merchant_uid: response.merchant_uid,
+        })
+
+        if (verifyResult.success) {
+          alert("결제가 완료되었습니다!")
+          setSelectedReservation(null)
+          loadReservations() // 목록 새로고침
+        } else {
+          alert(`결제 검증 실패: ${verifyResult.message || "알 수 없는 오류"}`)
+        }
+      } else {
+        alert(`결제 실패: ${response.error_msg || "알 수 없는 오류"}`)
+      }
     } catch (err: any) {
       alert(err.message || "결제 시작 중 오류가 발생했습니다")
+      console.error("결제 오류:", err)
     }
   }
 
