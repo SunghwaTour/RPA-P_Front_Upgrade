@@ -184,7 +184,7 @@ NEXT_PUBLIC_KAKAO_MAP_KEY=your-kakao-map-api-key
 - `types/index.ts`: All TypeScript type definitions ✅
 
 ### Configuration
-- `.env.local.example`: Environment variable template ✅
+- `.env.local.example`: Environment variable template ✅ 
 - `components.json`: shadcn/ui configuration
 - `app/globals.css`: Tailwind v4 config and King Bus brand colors
 
