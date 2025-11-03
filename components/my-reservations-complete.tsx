@@ -92,7 +92,7 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
       const paymentData = await initiatePayment(reservationId)
 
       // PortOne 결제 창 열기 (실제 구현은 별도 필요)
-      alert(`결제 금액: ${paymentData.deposit_amount.toLocaleString()}원\n\nPortOne 결제 기능은 추가 구현이 필요합니다.`)
+      alert(`결제 금액: ${Number(paymentData.deposit_amount).toLocaleString()}원\n\nPortOne 결제 기능은 추가 구현이 필요합니다.`)
 
       // TODO: PortOne SDK 연동
     } catch (err: any) {
@@ -318,21 +318,21 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                   <h3 className="font-semibold mb-3">견적 정보</h3>
                   <div className="text-center mb-3">
                     <div className="text-2xl font-bold text-primary">
-                      {selectedReservation.quote.total_price.toLocaleString()}원
+                      {Number(selectedReservation.quote.total_price).toLocaleString()}원
                     </div>
                   </div>
                   <div className="text-sm space-y-1">
-                    <p>거리: {selectedReservation.quote.distance_km.toLocaleString()}km</p>
-                    <p>예상 소요시간: {selectedReservation.quote.estimated_hours.toLocaleString()}시간</p>
+                    <p>거리: {Number(selectedReservation.quote.distance_km).toLocaleString()}km</p>
+                    <p>예상 소요시간: {Number(selectedReservation.quote.estimated_hours).toLocaleString()}시간</p>
                   </div>
                   <div className="border-t pt-3 mt-3 space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-green-600">예약금 (10%):</span>
-                      <span className="font-medium">{selectedReservation.deposit_amount.toLocaleString()}원</span>
+                      <span className="font-medium">{Number(selectedReservation.deposit_amount).toLocaleString()}원</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-orange-600">잔금 (현장결제):</span>
-                      <span className="font-medium">{selectedReservation.remaining_amount.toLocaleString()}원</span>
+                      <span className="font-medium">{Number(selectedReservation.remaining_amount).toLocaleString()}원</span>
                     </div>
                   </div>
                 </Card>

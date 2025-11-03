@@ -67,7 +67,7 @@ export function MyReservations({ onBack, user }: MyReservationsProps) {
                 </div>
 
                 <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                  <span className="text-lg font-bold text-primary">{reservation.quote_amount?.toLocaleString()}원</span>
+                  <span className="text-lg font-bold text-primary">{reservation.quote_amount ? Number(reservation.quote_amount).toLocaleString() : '0'}원</span>
                   <Button size="sm" variant="outline">
                     상세보기
                   </Button>

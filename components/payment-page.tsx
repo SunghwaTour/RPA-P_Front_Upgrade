@@ -131,15 +131,15 @@ export function PaymentPage({ reservationId, onBack, onSuccess }: PaymentPagePro
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span>총 예약금액:</span>
-                  <span className="font-medium">{paymentData.total_amount.toLocaleString()}원</span>
+                  <span className="font-medium">{Number(paymentData.total_amount).toLocaleString()}원</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-primary">
                   <span>예약금 (10%):</span>
-                  <span>{paymentData.deposit_amount.toLocaleString()}원</span>
+                  <span>{Number(paymentData.deposit_amount).toLocaleString()}원</span>
                 </div>
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>잔금 (현장결제):</span>
-                  <span>{paymentData.remaining_amount.toLocaleString()}원</span>
+                  <span>{Number(paymentData.remaining_amount).toLocaleString()}원</span>
                 </div>
               </div>
             </Card>
@@ -192,7 +192,7 @@ export function PaymentPage({ reservationId, onBack, onSuccess }: PaymentPagePro
               className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold rounded-xl"
             >
               <CreditCard className="w-5 h-5 mr-2" />
-              {loading ? "처리 중..." : `${paymentData.deposit_amount.toLocaleString()}원 결제하기`}
+              {loading ? "처리 중..." : `${Number(paymentData.deposit_amount).toLocaleString()}원 결제하기`}
             </Button>
           </div>
         ) : (

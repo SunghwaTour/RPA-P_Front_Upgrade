@@ -353,14 +353,14 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
 
               <div className="bg-white rounded-lg p-4 mb-4">
                 <div className="text-3xl font-bold text-primary mb-2 text-center">
-                  {quote.total_price.toLocaleString()}원
+                  {Number(quote.total_price).toLocaleString()}원
                 </div>
                 <div className="text-sm text-muted-foreground space-y-1 text-center">
-                  <p>거리: {quote.distance_km.toLocaleString()}km • 소요: {quote.estimated_hours.toLocaleString()}시간</p>
+                  <p>거리: {Number(quote.distance_km).toLocaleString()}km • 소요: {Number(quote.estimated_hours).toLocaleString()}시간</p>
                   <p>{quote.vehicle_type_display} • {quote.season_display}</p>
                   {quote.is_multi_vehicle && (
                     <p className="text-orange-600 font-medium">
-                      {quote.vehicle_count.toLocaleString()}대 차량 필요
+                      {Number(quote.vehicle_count).toLocaleString()}대 차량 필요
                     </p>
                   )}
                 </div>
@@ -369,10 +369,10 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
               <div className="bg-green-50 rounded-lg p-3 border border-green-200">
                 <div className="text-center">
                   <div className="text-lg font-semibold text-green-700 mb-1">
-                    예약금: {quote.deposit_amount.toLocaleString()}원
+                    예약금: {Number(quote.deposit_amount).toLocaleString()}원
                   </div>
                   <div className="text-sm text-gray-600">
-                    잔금 {quote.remaining_amount.toLocaleString()}원은 운행 당일 결제
+                    잔금 {Number(quote.remaining_amount).toLocaleString()}원은 운행 당일 결제
                   </div>
                 </div>
               </div>
