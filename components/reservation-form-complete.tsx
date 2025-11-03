@@ -25,6 +25,7 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
     return_date: "",
     return_time: "",
     passenger_count: 20,
+    vehicle_count: 1,
     vehicle_type: "general" as "general" | "solati",
     is_round_trip: false,
     driver_accompanied: true,
@@ -74,6 +75,7 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
         return_date: returnDateTime,
         is_round_trip: formData.is_round_trip,
         is_solati: formData.vehicle_type === "solati",
+        vehicle_count: formData.vehicle_count,
       })
 
       setQuote(quoteResponse)
@@ -112,7 +114,7 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
         departure_date: departureDateTime,
         return_date: returnDateTime,
         passenger_count: formData.passenger_count,
-        vehicle_count: quote.vehicle_count,
+        vehicle_count: formData.vehicle_count,
         vehicle_type: formData.vehicle_type,
         is_round_trip: formData.is_round_trip,
         driver_accompanied: formData.driver_accompanied,
@@ -275,7 +277,7 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
             </Card>
           )}
 
-          {/* 인원수 */}
+          {/* 인원수 및 차량 대수 */}
           <Card className="p-4">
             <Label className="flex items-center gap-2 mb-2 text-base font-semibold">
               <Users className="w-5 h-5 text-primary" />
@@ -292,6 +294,27 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
               className="h-12 text-base"
             />
             <p className="text-sm text-muted-foreground mt-2">최대 500명까지 예약 가능합니다</p>
+          </Card>
+
+          {/* 원하는 차량 대수 */}
+          <Card className="p-4">
+            <Label className="flex items-center gap-2 mb-2 text-base font-semibold">
+              <Bus className="w-5 h-5 text-primary" />
+              원하는 차량 대수
+            </Label>
+            <Input
+              type="number"
+              min="1"
+              max="20"
+              value={formData.vehicle_count}
+              onChange={(e) =>
+                setFormData({ ...formData, vehicle_count: parseInt(e.target.value) || 1 })
+              }
+              className="h-12 text-base"
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              인원수에 맞게 자동 계산되지만, 원하시는 경우 직접 지정할 수 있습니다
+            </p>
           </Card>
 
           {/* 차량 타입 */}

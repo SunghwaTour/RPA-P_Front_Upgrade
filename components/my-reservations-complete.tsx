@@ -397,7 +397,12 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                     예약금 결제
                   </Button>
                 )}
-                {selectedReservation.can_cancel && (
+                {selectedReservation.can_cancel &&
+                 selectedReservation.status !== "payment_completed" &&
+                 selectedReservation.status !== "confirmed" &&
+                 selectedReservation.status !== "dispatched" &&
+                 selectedReservation.status !== "in_progress" &&
+                 selectedReservation.status !== "completed" && (
                   <Button
                     variant="destructive"
                     className="flex-1"
