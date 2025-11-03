@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Bus, Calendar, MapPin, Users, Menu, LogOut, ChevronRight, Clock } from "lucide-react"
 import { ReservationFormComplete } from "@/components/reservation-form-complete"
 import { MyReservationsComplete } from "@/components/my-reservations-complete"
+import { getReservations } from "@/lib/api"
+import type { Reservation } from "@/types"
 
 interface MainScreenProps {
   user: { name: string; email: string } | null
@@ -15,6 +17,25 @@ interface MainScreenProps {
 export function MainScreen({ user, onLogout }: MainScreenProps) {
   const [activeTab, setActiveTab] = useState<"home" | "reservation" | "myReservations">("home")
   const [showMenu, setShowMenu] = useState(false)
+  const [recentReservations, setRecentReservations] = useState<Reservation[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // 최근 예약 불러오기
+  useEffect(() => {
+    const loadRecentReservations = async () => {
+      try {
+        const response = await getReservations({ page: 1 })
+        // 최근 3개만 표시
+        setRecentReservations(response.results.slice(0, 3))
+      } catch (error) {
+        console.error("최근 예약 조회 오류:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadRecentReservations()
+  }, [])
 
   if (activeTab === "reservation") {
     return <ReservationFormComplete onBack={() => setActiveTab("home")} />
@@ -143,18 +164,90 @@ export function MainScreen({ user, onLogout }: MainScreenProps) {
             </Button>
           </div>
 
-          <Card className="p-5 text-center">
-            <div className="py-8">
-              <Bus className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-              <p className="text-muted-foreground mb-4">아직 예약 내역이 없습니다</p>
-              <Button
-                onClick={() => setActiveTab("reservation")}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                첫 예약 시작하기
-              </Button>
+          {loading ? (
+            <Card className="p-5 text-center">
+              <div className="py-8">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-muted-foreground">로딩 중...</p>
+              </div>
+            </Card>
+          ) : recentReservations.length === 0 ? (
+            <Card className="p-5 text-center">
+              <div className="py-8">
+                <Bus className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                <p className="text-muted-foreground mb-4">아직 예약 내역이 없습니다</p>
+                <Button
+                  onClick={() => setActiveTab("reservation")}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  첫 예약 시작하기
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {recentReservations.map((reservation) => (
+                <Card
+                  key={reservation.id}
+                  className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => setActiveTab("myReservations")}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                        <Bus className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <MapPin className="w-4 h-4 text-green-600 flex-shrink-0" />
+                          <h3 className="font-semibold text-foreground truncate">
+                            {reservation.departure_location}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-red-600 flex-shrink-0" />
+                          <p className="text-sm text-muted-foreground truncate">
+                            {reservation.destination_location}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ml-2 ${
+                        reservation.status === "pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : reservation.status === "payment_waiting"
+                          ? "bg-orange-100 text-orange-700"
+                          : reservation.status === "payment_completed"
+                          ? "bg-green-100 text-green-700"
+                          : reservation.status === "confirmed"
+                          ? "bg-indigo-100 text-indigo-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {reservation.status_display}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-4 text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(reservation.departure_date).toLocaleDateString("ko-KR")}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        <span>{reservation.passenger_count}명</span>
+                      </div>
+                    </div>
+                    <span className="text-base font-bold text-primary">
+                      {reservation.quote_amount?.toLocaleString()}원
+                    </span>
+                  </div>
+                </Card>
+              ))}
             </div>
-          </Card>
+          )}
         </div>
       </main>
 
