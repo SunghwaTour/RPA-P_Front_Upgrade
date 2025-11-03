@@ -229,19 +229,25 @@ export function MainScreen({ user, onLogout }: MainScreenProps) {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-4 text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(reservation.departure_date).toLocaleDateString("ko-KR")}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        <span>{reservation.passenger_count}명</span>
-                      </div>
+                  <div className="space-y-1 text-sm mb-3">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(reservation.departure_date).toLocaleDateString("ko-KR")}</span>
                     </div>
+                    {reservation.return_date && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="w-4 h-4 text-purple-600" />
+                        <span className="text-purple-600">복귀: {new Date(reservation.return_date).toLocaleDateString("ko-KR")}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Users className="w-4 h-4" />
+                      <span>{reservation.passenger_count}명</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end">
                     <span className="text-base font-bold text-primary">
-                      {reservation.quote_amount?.toLocaleString()}원
+                      {reservation.quote_amount ? Number(reservation.quote_amount).toLocaleString() : '0'}원
                     </span>
                   </div>
                 </Card>

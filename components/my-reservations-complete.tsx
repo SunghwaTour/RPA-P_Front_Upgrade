@@ -196,6 +196,12 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                     <Calendar className="w-4 h-4" />
                     <span>{new Date(reservation.departure_date).toLocaleString("ko-KR")}</span>
                   </div>
+                  {reservation.return_date && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="w-4 h-4 text-purple-600" />
+                      <span className="text-purple-600">복귀: {new Date(reservation.return_date).toLocaleString("ko-KR")}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Users className="w-4 h-4" />
                     <span>{reservation.passenger_count}명</span>
@@ -207,7 +213,7 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
 
                 <div className="pt-4 border-t flex items-center justify-between gap-3">
                   <span className="text-lg font-bold text-primary">
-                    {reservation.quote_amount?.toLocaleString()}원
+                    {reservation.quote_amount ? Number(reservation.quote_amount).toLocaleString() : '0'}원
                   </span>
                   <div className="flex gap-2">
                     {reservation.status === "payment_waiting" && (
@@ -284,6 +290,17 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                       </p>
                     </div>
                   </div>
+                  {selectedReservation.return_date && (
+                    <div className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-purple-600 mt-0.5" />
+                      <div>
+                        <p className="font-medium">복귀일시</p>
+                        <p className="text-muted-foreground">
+                          {new Date(selectedReservation.return_date).toLocaleString("ko-KR")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between pt-2 border-t">
                     <span>인원수: {selectedReservation.passenger_count}명</span>
                     {selectedReservation.is_multi_vehicle && (
