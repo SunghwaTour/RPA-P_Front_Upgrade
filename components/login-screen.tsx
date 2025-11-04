@@ -26,7 +26,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#5B68F0] via-[#6B76F5] to-[#7B84FA] flex flex-col relative overflow-hidden w-full max-w-[600px] mx-auto">
+    <div className="min-h-screen flex flex-col relative overflow-hidden w-full max-w-[600px] mx-auto" style={{ backgroundColor: 'rgba(74, 105, 228, 1)' }}>
       {/* 타이틀 */}
       <div className="pt-24 sm:pt-32 px-6 sm:px-8 mb-12 sm:mb-16">
         <h1 className="text-white text-[28px] sm:text-[32px] font-bold leading-tight mb-3 sm:mb-4">
