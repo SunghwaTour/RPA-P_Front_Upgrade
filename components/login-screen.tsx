@@ -57,27 +57,12 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         </div>
 
         {/* 버스 일러스트 */}
-        <div className="relative w-full max-w-md h-48 mb-16">
-          <div className="absolute bottom-0 right-8">
-            {/* 버스 정류장 표지판 */}
-            <div className="absolute left-4 bottom-0 w-16 h-32 flex flex-col items-center">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-2 shadow-lg">
-                <Bus className="w-7 h-7 text-primary" />
-              </div>
-              <div className="w-2 h-20 bg-white/80 rounded-full" />
-            </div>
-
-            {/* 버스 */}
-            <div className="ml-24 w-48 h-28 bg-white rounded-3xl shadow-2xl relative overflow-hidden">
-              {/* 버스 창문 */}
-              <div className="absolute top-4 left-4 right-4 h-12 bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl" />
-              {/* 버스 바퀴 */}
-              <div className="absolute -bottom-3 left-8 w-10 h-10 bg-gray-800 rounded-full border-4 border-white" />
-              <div className="absolute -bottom-3 right-8 w-10 h-10 bg-gray-800 rounded-full border-4 border-white" />
-              {/* 헤드라이트 */}
-              <div className="absolute bottom-8 left-4 w-3 h-3 bg-yellow-400 rounded-full" />
-            </div>
-          </div>
+        <div className="relative w-full max-w-md h-48 mb-16 flex items-center justify-center">
+          <img
+            src="/login_bus.svg"
+            alt="버스 일러스트"
+            className="w-full h-full object-contain"
+          />
         </div>
       </div>
 
