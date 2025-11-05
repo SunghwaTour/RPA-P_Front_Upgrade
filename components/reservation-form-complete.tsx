@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, MapPin, Calendar, Users, Bus, Calculator, Map } from "lucide-react"
 import { getQuote, createReservation } from "@/lib/api"
 import { KakaoMapModal } from "@/components/kakao-map-modal"
+import { PhoneVerificationModal } from "@/components/phone-verification-modal"
+import { getUser } from "@/lib/supabase"
 import type { QuoteResponse, CreateReservationRequest } from "@/types"
 
 interface ReservationFormCompleteProps {
@@ -40,6 +42,21 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
     isOpen: boolean
     type: "departure" | "destination"
   }>({ isOpen: false, type: "departure" })
+  const [showVerificationModal, setShowVerificationModal] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
+  // 사용자 정보 로드
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const user = await getUser()
+        setCurrentUser(user)
+      } catch (err) {
+        console.error("사용자 정보 로드 오류:", err)
+      }
+    }
+    loadUser()
+  }, [])
 
   // 견적 계산
   const handleCalculateQuote = async () => {
@@ -88,13 +105,24 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
     }
   }
 
-  // 예약 신청
-  const handleSubmit = async () => {
+  // 예약 신청 버튼 클릭 (휴대폰 인증 모달 표시)
+  const handleReservationRequest = () => {
     if (!quote) {
       setError("먼저 견적을 조회해주세요")
       return
     }
 
+    if (!currentUser) {
+      setError("사용자 정보를 불러올 수 없습니다. 다시 로그인해주세요.")
+      return
+    }
+
+    // 휴대폰 인증 모달 표시
+    setShowVerificationModal(true)
+  }
+
+  // 휴대폰 인증 완료 후 예약 신청
+  const handleSubmitAfterVerification = async () => {
     setLoading(true)
     setError(null)
 
@@ -415,7 +443,7 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
 
             {showQuote && (
               <Button
-                onClick={handleSubmit}
+                onClick={handleReservationRequest}
                 disabled={loading}
                 className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold rounded-xl"
               >
@@ -458,6 +486,15 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
           setMapModal({ ...mapModal, isOpen: false })
         }}
         title={mapModal.type === "departure" ? "출발지 선택" : "도착지 선택"}
+      />
+
+      {/* 휴대폰 인증 모달 */}
+      <PhoneVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onVerified={handleSubmitAfterVerification}
+        customerName={currentUser?.user_metadata?.name || currentUser?.email || "고객"}
+        phone={currentUser?.user_metadata?.phone || ""}
       />
     </div>
   )

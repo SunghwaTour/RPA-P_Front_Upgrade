@@ -123,3 +123,27 @@ export async function cancelPayment(paymentId: string, reason: string): Promise<
     body: JSON.stringify({ reason }),
   })
 }
+
+// 휴대폰 인증 코드 전송
+export async function sendVerificationCode(phone: string): Promise<{
+  success: boolean
+  message: string
+  expires_in: number
+  code?: string
+}> {
+  return fetchAPI("/api/v1/reservation/verification/send/", {
+    method: "POST",
+    body: JSON.stringify({ phone }),
+  })
+}
+
+// 휴대폰 인증 코드 검증
+export async function verifyPhoneNumber(phone: string, code: string): Promise<{
+  success: boolean
+  message: string
+}> {
+  return fetchAPI("/api/v1/reservation/verification/verify/", {
+    method: "POST",
+    body: JSON.stringify({ phone, code }),
+  })
+}

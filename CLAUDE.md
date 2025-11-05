@@ -45,7 +45,7 @@ The project uses **shadcn/ui** components with Radix UI primitives and Tailwind 
   - `login-screen.tsx`: OAuth login UI (Supabase integrated) ✅
     - Custom responsive design (375px-600px)
     - Circular login buttons (56x56px)
-    - SVG illustration integration (login_bus.svg)
+    - SVG illustration integration (login_kingbus_label.svg, login_kingking.svg)
     - Background color: rgba(74, 105, 228, 1)
   - `main-screen.tsx`: Authenticated home screen with navigation ✅
     - Recent reservations display (top 3)
@@ -61,12 +61,21 @@ The project uses **shadcn/ui** components with Radix UI primitives and Tailwind 
     - Interactive map with click-to-select
     - Marker placement and geocoding
     - Current location detection
-  - `my-reservations-complete.tsx`: Reservation list with filtering ✅
-    - Status-based filtering
-    - Return date display for round-trips
+  - `my-reservations-complete.tsx`: Redesigned reservation list and detail view ✅
+    - Clean card-based list design
+    - Status display with chevron icon (left side)
+    - Round-trip/one-way badge (right side)
+    - Location names with smaller text (text-sm)
+    - Departure and arrival dates with directional arrows
+    - Full-screen detail modal with organized sections
     - PortOne payment integration
-    - Cancellation restrictions (no cancel after payment)
-    - Number formatting with thousand separators
+    - Conditional payment/refund information display
+    - Customer information from API (customer.name, customer.email, customer.phone)
+  - `payment-screen.tsx`: New payment screen component ✅
+    - Prominent payment amount display
+    - Expandable sections (예약 상세, 예약자 정보, 판매자 정보, etc.)
+    - Agreement checkboxes with validation
+    - Integrated into reservation detail flow
   - `payment-page.tsx`: PortOne payment integration ✅
 - **Styling**: Tailwind CSS v4 with custom King Bus brand colors in `app/globals.css`
   - Primary blue: `oklch(0.55 0.18 264)` (rgba(74, 105, 228, 1))
@@ -120,6 +129,9 @@ This is a Next.js App Router application with a robust authentication and API in
 - Vehicle count is user-selectable (1-20) in reservation form
 - Payment cancellation button hidden for completed/confirmed reservations
 - Return date properly displayed in list and detail views
+- Customer data accessed via `reservation.customer.name`, `reservation.customer.email`, `reservation.customer.phone`
+- Payment information conditionally displayed only when `latest_payment` exists
+- Optional chaining (`?.`) used throughout for safe property access
 
 ### Authentication Flow
 
@@ -199,7 +211,8 @@ NEXT_PUBLIC_KAKAO_MAP_KEY=your-kakao-map-api-key
 - `components/login-screen.tsx`: OAuth login UI ✅
 - `components/main-screen.tsx`: Authenticated home screen ✅
 - `components/reservation-form-complete.tsx`: Full booking form ✅
-- `components/my-reservations-complete.tsx`: Reservation list ✅
+- `components/my-reservations-complete.tsx`: Redesigned reservation list and detail view ✅
+- `components/payment-screen.tsx`: New payment screen with expandable sections ✅
 - `components/payment-page.tsx`: Payment processing ✅
 
 ### Libraries
@@ -252,18 +265,33 @@ When creating new components:
   - Vehicle count selection (1-20)
   - Vehicle type selection (general/solati)
   - Round-trip support with return date
-  - Reservation list with status filtering
-  - Reservation detail view with all info
-  - Return date display for round-trip reservations
+  - **Redesigned reservation list view**:
+    - Clean card-based design without status filters
+    - Status name with chevron icon on left
+    - Round-trip/one-way badge on right
+    - Smaller location text (text-sm)
+    - Date/time formatting with directional arrows
+  - **Redesigned reservation detail view**:
+    - Full-screen modal with back button
+    - Reservation number and status badge
+    - Organized sections: 운행 정보, 버스 정보, 고객 정보, 요청사항, 결제/환불 정보
+    - Customer data from API nested structure
+    - Conditional payment info display
   - Reservation cancellation (status-based restrictions)
 
 - **Payment Integration**
   - PortOne payment gateway fully integrated
-  - Payment initiation from reservation detail
+  - **New payment screen component**:
+    - Prominent payment amount card with blue background
+    - Expandable sections for reservation details, customer info, seller info
+    - Privacy and refund policy sections
+    - Agreement checkboxes with "전체 동의" option
+    - Disabled submit button until all agreements checked
+  - Payment initiation from reservation detail (payment_waiting status)
   - Payment verification with backend
   - Payment status tracking
   - Deposit (10%) and remaining amount display
-  - Cancel button hidden after payment completion
+  - Conditional button display based on payment status
 
 - **UI/UX Enhancements**
   - Number formatting with thousand separators (toLocaleString)
