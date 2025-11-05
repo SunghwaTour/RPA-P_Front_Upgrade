@@ -43,14 +43,35 @@ The project uses **shadcn/ui** components with Radix UI primitives and Tailwind 
 - **Base components**: Located in `components/ui/` (button, card, input, label, etc.)
 - **Feature components**: Located in `components/`
   - `login-screen.tsx`: OAuth login UI (Supabase integrated) ✅
+    - Custom responsive design (375px-600px)
+    - Circular login buttons (56x56px)
+    - SVG illustration integration (login_bus.svg)
+    - Background color: rgba(74, 105, 228, 1)
   - `main-screen.tsx`: Authenticated home screen with navigation ✅
+    - Recent reservations display (top 3)
+    - Return date support for round-trip bookings
   - `reservation-form-complete.tsx`: Full bus booking form with quote API ✅
+    - Passenger count input (1-500)
+    - Vehicle count selection (1-20)
+    - Vehicle type selection (general/solati)
+    - Kakao Map integration for locations
+    - Round-trip support
   - `kakao-map-modal.tsx`: Kakao Map integration with place search ✅
+    - Place/address search with autocomplete
+    - Interactive map with click-to-select
+    - Marker placement and geocoding
+    - Current location detection
   - `my-reservations-complete.tsx`: Reservation list with filtering ✅
+    - Status-based filtering
+    - Return date display for round-trips
+    - PortOne payment integration
+    - Cancellation restrictions (no cancel after payment)
+    - Number formatting with thousand separators
   - `payment-page.tsx`: PortOne payment integration ✅
 - **Styling**: Tailwind CSS v4 with custom King Bus brand colors in `app/globals.css`
   - Primary blue: `oklch(0.55 0.18 264)` (rgba(74, 105, 228, 1))
-  - Secondary yellow: Kakao brand color
+  - Login background: rgba(74, 105, 228, 1)
+  - Secondary yellow: Kakao brand color (#FEE500)
   - Mobile utilities: `.safe-area-inset` and `.touch-manipulation` classes
 
 ### Application Structure
@@ -86,13 +107,19 @@ This is a Next.js App Router application with a robust authentication and API in
 - Full API documentation: `../reservation-system/FRONTEND_API_DOCUMENTATION.md`
 
 **Key API Functions** (`lib/api.ts`):
-- `getQuote()`: Real-time quote calculation ✅
-- `createReservation()`: Create new reservation ✅
-- `getReservations()`: List user reservations with filtering ✅
-- `getReservation()`: Get reservation details ✅
-- `cancelReservation()`: Cancel reservation ✅
-- `initiatePayment()`: Start payment process ✅
-- `verifyPayment()`: Verify payment completion ✅
+- `getQuote()`: Real-time quote calculation with vehicle_count support ✅
+- `createReservation()`: Create new reservation with all form data ✅
+- `getReservations()`: List user reservations with status filtering ✅
+- `getReservation()`: Get reservation details with quote info ✅
+- `cancelReservation()`: Cancel reservation (status-restricted) ✅
+- `initiatePayment()`: Start PortOne payment process ✅
+- `verifyPayment()`: Verify payment completion with backend ✅
+
+**Important Implementation Details**:
+- All numeric values use `Number()` conversion before `.toLocaleString()` for proper formatting
+- Vehicle count is user-selectable (1-20) in reservation form
+- Payment cancellation button hidden for completed/confirmed reservations
+- Return date properly displayed in list and detail views
 
 ### Authentication Flow
 
@@ -206,20 +233,45 @@ When creating new components:
 
 ### ✅ Completed Features
 
-- Google/Kakao OAuth login via Supabase
-- Real-time authentication state management
-- Kakao Map integration for location selection
+- **Authentication**
+  - Google/Kakao OAuth login via Supabase
+  - Real-time authentication state management
+  - Mobile-optimized login screen (375px-600px responsive)
+  - Custom login design with SVG illustration
+
+- **Kakao Map Integration**
   - Place/address search with autocomplete
   - Interactive map with marker placement
   - Geocoding and reverse geocoding
   - Current location detection
-- Reservation creation with quote calculation
-- Reservation list with status filtering
-- Reservation detail view and cancellation
-- PortOne payment integration
-- Full TypeScript type coverage
-- Mobile-optimized responsive design
-- Error handling and loading states
+  - Modal-based location selection
+
+- **Reservation System**
+  - Reservation creation with quote calculation
+  - Passenger count input (1-500)
+  - Vehicle count selection (1-20)
+  - Vehicle type selection (general/solati)
+  - Round-trip support with return date
+  - Reservation list with status filtering
+  - Reservation detail view with all info
+  - Return date display for round-trip reservations
+  - Reservation cancellation (status-based restrictions)
+
+- **Payment Integration**
+  - PortOne payment gateway fully integrated
+  - Payment initiation from reservation detail
+  - Payment verification with backend
+  - Payment status tracking
+  - Deposit (10%) and remaining amount display
+  - Cancel button hidden after payment completion
+
+- **UI/UX Enhancements**
+  - Number formatting with thousand separators (toLocaleString)
+  - Explicit Number() conversion for all numeric values
+  - Full TypeScript type coverage
+  - Mobile-optimized responsive design (375px-600px)
+  - Error handling and loading states
+  - Touch-optimized interactions
 
 ### 🚧 Planned Features
 

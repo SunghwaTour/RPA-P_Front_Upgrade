@@ -28,21 +28,33 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden w-full max-w-[600px] mx-auto" style={{ backgroundColor: 'rgba(74, 105, 228, 1)' }}>
       {/* 타이틀 */}
-      <div className="pt-24 sm:pt-32 px-6 sm:px-8 mb-12 sm:mb-16">
+      <div className="pt-24 sm:pt-32 px-6 sm:px-8 mb-8 sm:mb-12">
         <h1 className="text-white text-[28px] sm:text-[32px] font-bold leading-tight mb-3 sm:mb-4">
-          믿을 수 있는<br />
-          버스 예약 파트너
+          쉽고 빠른 견적<br />
+          버스 대절은 킹버스
         </h1>
-        <p className="text-white/90 text-[14px] sm:text-[16px]">간편한 예약부터 편안한 여행까지</p>
+        <p className="text-white/90 text-[14px] sm:text-[16px]">한 눈에 비교하고, 간편하게 예약하세요</p>
       </div>
 
-      {/* 버스 일러스트 */}
-      <div className="relative w-full h-[180px] sm:h-[220px] flex-1 flex items-center">
-        <img
-          src="/login_bus.svg"
-          alt="버스 일러스트"
-          className="w-full h-full object-contain"
-        />
+      {/* 일러스트 영역 */}
+      <div className="relative w-full flex-1 flex items-end justify-between pb-0">
+        {/* KING BUS 라벨 */}
+        <div className="w-[100px] sm:w-[120px] mb-8 sm:mb-12 ml-4 sm:ml-6">
+          <img
+            src="/login_kingbus_label.svg"
+            alt="KING BUS"
+            className="w-full h-auto"
+          />
+        </div>
+
+        {/* 킹킹 캐릭터 */}
+        <div className="w-[200px] sm:w-[280px]">
+          <img
+            src="/login_kingking.svg"
+            alt="킹킹 캐릭터"
+            className="w-full h-auto"
+          />
+        </div>
       </div>
 
       {/* 로그인 버튼 영역 */}
