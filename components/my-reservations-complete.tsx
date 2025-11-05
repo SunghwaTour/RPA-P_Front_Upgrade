@@ -45,20 +45,17 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
-  const [statusFilter, setStatusFilter] = useState<string>("all")
   const [showPaymentScreen, setShowPaymentScreen] = useState(false)
 
   useEffect(() => {
     loadReservations()
-  }, [statusFilter])
+  }, [])
 
   const loadReservations = async () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await getReservations({
-        status: statusFilter === "all" ? undefined : statusFilter,
-      })
+      const response = await getReservations({})
       setReservations(response.results)
     } catch (err: any) {
       setError(err.message || "예약 목록을 불러오는 중 오류가 발생했습니다")
@@ -142,15 +139,6 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
     }
   }
 
-  const filterButtons = [
-    { value: "all", label: "전체" },
-    { value: "pending", label: "대기" },
-    { value: "payment_waiting", label: "결제대기" },
-    { value: "payment_completed", label: "결제완료" },
-    { value: "confirmed", label: "확정" },
-    { value: "completed", label: "완료" },
-  ]
-
   return (
     <div className="min-h-screen bg-background">
       {/* 헤더 */}
@@ -163,24 +151,6 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
         </div>
       </header>
 
-      {/* 필터 */}
-      <div className="sticky top-[68px] z-40 bg-white border-b px-4 py-3">
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {filterButtons.map((btn) => (
-            <button
-              key={btn.value}
-              onClick={() => setStatusFilter(btn.value)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                statusFilter === btn.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {btn.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* 예약 목록 */}
       <main className="px-4 py-6">
@@ -212,22 +182,18 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                 className="p-4 hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => handleViewDetail(reservation.id)}
               >
-                {/* Header: Trip type + Status badge */}
-                <div className="flex items-center justify-between mb-4">
+                {/* Header: Status + Trip type badge */}
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-1">
-                    <h3 className="font-semibold text-base text-foreground">
-                      {reservation.return_date ? "왕복" : "편도"}
-                    </h3>
+                    <span className="font-semibold text-sm text-foreground">
+                      {statusNames[reservation.status]}
+                    </span>
                     <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <span
-                    className={`text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap ${
-                      statusColors[reservation.status]
-                    }`}
-                  >
-                    {statusNames[reservation.status]}
+                  <span className="text-xs font-medium px-2 py-1 rounded bg-blue-100 text-blue-700">
+                    {reservation.return_date ? "왕복" : "편도"}
                   </span>
                 </div>
 
@@ -235,10 +201,10 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                 <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
                   {/* Departure */}
                   <div className="text-left">
-                    <h4 className="font-semibold text-lg text-foreground mb-1">
+                    <h4 className="font-semibold text-sm text-foreground mb-1">
                       {reservation.departure_location}
                     </h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {new Date(reservation.departure_date).toLocaleDateString("ko-KR", {
                         month: "2-digit",
                         day: "2-digit"
@@ -255,11 +221,11 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                   {/* Arrow icon */}
                   <div className="flex items-center justify-center">
                     {reservation.return_date ? (
-                      <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                       </svg>
                     ) : (
-                      <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                       </svg>
                     )}
@@ -267,10 +233,10 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
 
                   {/* Destination */}
                   <div className="text-right">
-                    <h4 className="font-semibold text-lg text-foreground mb-1">
+                    <h4 className="font-semibold text-sm text-foreground mb-1">
                       {reservation.destination_location}
                     </h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {reservation.return_date ? (
                         <>
                           {new Date(reservation.return_date).toLocaleDateString("ko-KR", {
