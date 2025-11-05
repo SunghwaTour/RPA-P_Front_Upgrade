@@ -132,15 +132,15 @@ export function PaymentScreen({ reservation, onBack, onPayment }: PaymentScreenP
             <div className="px-4 pb-4 space-y-3 text-sm border-t">
               <div className="flex justify-between pt-3">
                 <span className="text-muted-foreground">이름</span>
-                <span className="font-medium">{reservation.customer_name || "-"}</span>
+                <span className="font-medium">{reservation.customer?.name || "-"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">연락처</span>
-                <span className="font-medium">{reservation.customer_phone || "-"}</span>
+                <span className="font-medium">{reservation.customer?.phone || "-"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">이메일</span>
-                <span className="font-medium">{reservation.customer_email || "-"}</span>
+                <span className="font-medium">{reservation.customer?.email || "-"}</span>
               </div>
             </div>
           )}
