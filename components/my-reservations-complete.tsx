@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, Bus, Calendar, Users, MapPin, X, CreditCard } from "lucide-react"
+import { ArrowLeft, Bus, Calendar } from "lucide-react"
 import { getReservations, getReservation, cancelReservation, initiatePayment, verifyPayment } from "@/lib/api"
 import { loadPortOneScript, initPortOne, requestPortOnePayment, type PortOnePaymentRequest } from "@/lib/portone"
 import type { Reservation, ReservationStatus } from "@/types"
+import { PaymentScreen } from "./payment-screen"
 
 interface MyReservationsCompleteProps {
   onBack: () => void
@@ -45,6 +46,7 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
   const [error, setError] = useState<string | null>(null)
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [showPaymentScreen, setShowPaymentScreen] = useState(false)
 
   useEffect(() => {
     loadReservations()
@@ -205,25 +207,23 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
         ) : (
           <div className="space-y-4">
             {reservations.map((reservation) => (
-              <Card key={reservation.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                      <Bus className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <MapPin className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <h3 className="font-semibold text-foreground truncate">{reservation.departure_location}</h3>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-red-600 flex-shrink-0" />
-                        <p className="text-sm text-muted-foreground truncate">{reservation.destination_location}</p>
-                      </div>
-                    </div>
+              <Card
+                key={reservation.id}
+                className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => handleViewDetail(reservation.id)}
+              >
+                {/* Header: Trip type + Status badge */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-1">
+                    <h3 className="font-semibold text-base text-foreground">
+                      {reservation.return_date ? "왕복" : "편도"}
+                    </h3>
+                    <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
                   <span
-                    className={`text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap ml-2 ${
+                    className={`text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap ${
                       statusColors[reservation.status]
                     }`}
                   >
@@ -231,44 +231,73 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                   </span>
                 </div>
 
-                <div className="space-y-2 text-sm mb-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(reservation.departure_date).toLocaleString("ko-KR")}</span>
+                {/* Trip details: departure -> destination */}
+                <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
+                  {/* Departure */}
+                  <div className="text-left">
+                    <h4 className="font-semibold text-lg text-foreground mb-1">
+                      {reservation.departure_location}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(reservation.departure_date).toLocaleDateString("ko-KR", {
+                        month: "2-digit",
+                        day: "2-digit"
+                      })}{" "}
+                      {new Date(reservation.departure_date).toLocaleTimeString("ko-KR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false
+                      })}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">출발</p>
                   </div>
-                  {reservation.return_date && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="w-4 h-4 text-purple-600" />
-                      <span className="text-purple-600">복귀: {new Date(reservation.return_date).toLocaleString("ko-KR")}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Users className="w-4 h-4" />
-                    <span>{reservation.passenger_count}명</span>
-                    {reservation.is_multi_vehicle && (
-                      <span className="text-orange-600">• {reservation.vehicle_count}대</span>
-                    )}
-                  </div>
-                </div>
 
-                <div className="pt-4 border-t flex items-center justify-between gap-3">
-                  <span className="text-lg font-bold text-primary">
-                    {reservation.quote_amount ? Number(reservation.quote_amount).toLocaleString() : '0'}원
-                  </span>
-                  <div className="flex gap-2">
-                    {reservation.status === "payment_waiting" && (
-                      <Button
-                        size="sm"
-                        onClick={() => handlePayment(reservation.id)}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <CreditCard className="w-4 h-4 mr-1" />
-                        결제
-                      </Button>
+                  {/* Arrow icon */}
+                  <div className="flex items-center justify-center">
+                    {reservation.return_date ? (
+                      <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
                     )}
-                    <Button size="sm" variant="outline" onClick={() => handleViewDetail(reservation.id)}>
-                      상세보기
-                    </Button>
+                  </div>
+
+                  {/* Destination */}
+                  <div className="text-right">
+                    <h4 className="font-semibold text-lg text-foreground mb-1">
+                      {reservation.destination_location}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {reservation.return_date ? (
+                        <>
+                          {new Date(reservation.return_date).toLocaleDateString("ko-KR", {
+                            month: "2-digit",
+                            day: "2-digit"
+                          })}{" "}
+                          {new Date(reservation.return_date).toLocaleTimeString("ko-KR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false
+                          })}
+                        </>
+                      ) : (
+                        <>
+                          {new Date(reservation.departure_date).toLocaleDateString("ko-KR", {
+                            month: "2-digit",
+                            day: "2-digit"
+                          })}{" "}
+                          {new Date(reservation.departure_date).toLocaleTimeString("ko-KR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false
+                          })}
+                        </>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">도착</p>
                   </div>
                 </div>
               </Card>
@@ -279,142 +308,192 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
 
       {/* 상세 모달 */}
       {selectedReservation && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
-            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold">예약 상세</h2>
-              <Button variant="ghost" size="icon" onClick={() => setSelectedReservation(null)}>
-                <X className="w-5 h-5" />
-              </Button>
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-white border-b px-4 py-4 flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setSelectedReservation(null)}>
+              <ArrowLeft className="w-6 h-6" />
+            </Button>
+            <h2 className="text-lg font-bold">예약 상세</h2>
+          </div>
+
+          <div className="px-4 py-6 space-y-4">
+            {/* Reservation number and status */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-muted-foreground">예약 번호 : {selectedReservation.id}</p>
+              <span
+                className={`text-xs font-medium px-3 py-1 rounded-full ${
+                  statusColors[selectedReservation.status]
+                }`}
+              >
+                {statusNames[selectedReservation.status]}
+              </span>
             </div>
 
-            <div className="p-4 space-y-4">
-              {/* 상태 */}
-              <div className="text-center py-3">
-                <span
-                  className={`inline-block text-sm font-medium px-4 py-2 rounded-full ${
-                    statusColors[selectedReservation.status]
-                  }`}
-                >
-                  {statusNames[selectedReservation.status]}
-                </span>
+            {/* 운행 정보 */}
+            <div className="border-b pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-base">운행 정보</h3>
+                {selectedReservation.return_date && (
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">왕복</span>
+                )}
               </div>
-
-              {/* 운행 정보 */}
-              <Card className="p-4 bg-gray-50">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Bus className="w-5 h-5 text-primary" />
-                  운행 정보
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium">출발지</p>
-                      <p className="text-muted-foreground">{selectedReservation.departure_location}</p>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">강남역</span>
+                  <span className="font-medium">{selectedReservation.departure_location}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {new Date(selectedReservation.departure_date).toLocaleDateString("ko-KR", {
+                      month: "2-digit",
+                      day: "2-digit"
+                    })}{" "}
+                    {new Date(selectedReservation.departure_date).toLocaleTimeString("ko-KR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false
+                    })}
+                  </span>
+                  <span className="text-muted-foreground">출발</span>
+                </div>
+                {selectedReservation.return_date && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">부산역</span>
+                      <span className="font-medium">{selectedReservation.destination_location}</span>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-red-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium">도착지</p>
-                      <p className="text-muted-foreground">{selectedReservation.destination_location}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Calendar className="w-4 h-4 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium">출발일시</p>
-                      <p className="text-muted-foreground">
-                        {new Date(selectedReservation.departure_date).toLocaleString("ko-KR")}
-                      </p>
-                    </div>
-                  </div>
-                  {selectedReservation.return_date && (
-                    <div className="flex items-start gap-2">
-                      <Calendar className="w-4 h-4 text-purple-600 mt-0.5" />
-                      <div>
-                        <p className="font-medium">복귀일시</p>
-                        <p className="text-muted-foreground">
-                          {new Date(selectedReservation.return_date).toLocaleString("ko-KR")}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <span>인원수: {selectedReservation.passenger_count}명</span>
-                    {selectedReservation.is_multi_vehicle && (
-                      <span className="text-orange-600 font-medium">
-                        차량 {selectedReservation.vehicle_count}대
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {new Date(selectedReservation.return_date).toLocaleDateString("ko-KR", {
+                          month: "2-digit",
+                          day: "2-digit"
+                        })}{" "}
+                        {new Date(selectedReservation.return_date).toLocaleTimeString("ko-KR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false
+                        })}
                       </span>
-                    )}
+                      <span className="text-muted-foreground">도착</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* 버스 정보 */}
+            <div className="border-b pb-4">
+              <h3 className="font-semibold text-base mb-3">버스 정보</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">인승</span>
+                  <span className="font-medium">{selectedReservation.passenger_count}인승</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">대수</span>
+                  <span className="font-medium">{selectedReservation.vehicle_count}대</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 고객 정보 */}
+            <div className="border-b pb-4">
+              <h3 className="font-semibold text-base mb-3">고객 정보</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">고객명</span>
+                  <span className="font-medium">{selectedReservation.customer_name || "-"}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">연락처</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{selectedReservation.customer_phone || "-"}</span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </Button>
                   </div>
                 </div>
-              </Card>
-
-              {/* 견적 정보 */}
-              {selectedReservation.quote && (
-                <Card className="p-4 bg-blue-50 border-blue-200">
-                  <h3 className="font-semibold mb-3">견적 정보</h3>
-                  <div className="text-center mb-3">
-                    <div className="text-2xl font-bold text-primary">
-                      {Number(selectedReservation.quote.total_price).toLocaleString()}원
-                    </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">이메일</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{selectedReservation.customer_email || "-"}</span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </Button>
                   </div>
-                  <div className="text-sm space-y-1">
-                    <p>거리: {Number(selectedReservation.quote.distance_km).toLocaleString()}km</p>
-                    <p>예상 소요시간: {Number(selectedReservation.quote.estimated_hours).toLocaleString()}시간</p>
-                  </div>
-                  <div className="border-t pt-3 mt-3 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-green-600">예약금 (10%):</span>
-                      <span className="font-medium">{Number(selectedReservation.deposit_amount).toLocaleString()}원</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-orange-600">잔금 (현장결제):</span>
-                      <span className="font-medium">{Number(selectedReservation.remaining_amount).toLocaleString()}원</span>
-                    </div>
-                  </div>
-                </Card>
-              )}
-
-              {/* 특이사항 */}
-              {selectedReservation.special_requirements && (
-                <Card className="p-4 bg-gray-50">
-                  <h3 className="font-semibold mb-2">특이사항</h3>
-                  <p className="text-sm text-muted-foreground">{selectedReservation.special_requirements}</p>
-                </Card>
-              )}
-
-              {/* 액션 버튼 */}
-              <div className="flex gap-2 pt-4">
-                {selectedReservation.status === "payment_waiting" && (
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => handlePayment(selectedReservation.id)}
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    예약금 결제
-                  </Button>
-                )}
-                {selectedReservation.can_cancel &&
-                 selectedReservation.status !== "payment_completed" &&
-                 selectedReservation.status !== "confirmed" &&
-                 selectedReservation.status !== "dispatched" &&
-                 selectedReservation.status !== "in_progress" &&
-                 selectedReservation.status !== "completed" && (
-                  <Button
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => handleCancelReservation(selectedReservation.id)}
-                  >
-                    예약 취소
-                  </Button>
-                )}
+                </div>
               </div>
             </div>
-          </Card>
+
+            {/* 요청사항 */}
+            <div className="border-b pb-4">
+              <h3 className="font-semibold text-base mb-3">요청사항</h3>
+              <p className="text-sm text-muted-foreground">
+                {selectedReservation.special_requirements || "없는데 있습니다"}
+              </p>
+            </div>
+
+            {/* 결제/환불 정보 */}
+            <div className="pb-4">
+              <h3 className="font-semibold text-base mb-3">결제/환불 정보</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">예약금</span>
+                  <span className="font-medium">{Number(selectedReservation.deposit_amount).toLocaleString()}원</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">결제 금액</span>
+                  <span className="font-medium">{Number(selectedReservation.deposit_amount).toLocaleString()}원</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">카드사</span>
+                  <span className="font-medium">삼성카드</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom buttons */}
+            <div className="space-y-3">
+              {selectedReservation.status === "payment_waiting" && (
+                <Button
+                  className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={() => setShowPaymentScreen(true)}
+                >
+                  결제하기
+                </Button>
+              )}
+              {selectedReservation.status === "payment_completed" && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    // TODO: Navigate to payment history detail page
+                    alert("결제/환불 내역 페이지로 이동 (구현 예정)")
+                  }}
+                >
+                  결제/환불 내역 자세히 보기
+                  <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* Payment Screen */}
+      {showPaymentScreen && selectedReservation && (
+        <PaymentScreen
+          reservation={selectedReservation}
+          onBack={() => setShowPaymentScreen(false)}
+          onPayment={() => handlePayment(selectedReservation.id)}
+        />
       )}
     </div>
   )
