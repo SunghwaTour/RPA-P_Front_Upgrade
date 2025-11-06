@@ -147,3 +147,15 @@ export async function verifyPhoneNumber(phone: string, code: string): Promise<{
     body: JSON.stringify({ phone, code }),
   })
 }
+
+// 고객 프로필 조회
+export async function getCustomerProfile(): Promise<{
+  id: string
+  email: string
+  name: string
+  phone: string | null
+  provider: string
+  created_at: string
+}> {
+  return fetchAPI("/api/v1/reservation/profile/")
+}

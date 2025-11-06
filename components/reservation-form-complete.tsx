@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, MapPin, Calendar, Users, Bus, Calculator, Map } from "lucide-react"
-import { getQuote, createReservation } from "@/lib/api"
+import { getQuote, createReservation, getCustomerProfile } from "@/lib/api"
 import { KakaoMapModal } from "@/components/kakao-map-modal"
 import { PhoneVerificationModal } from "@/components/phone-verification-modal"
 import { getUser } from "@/lib/supabase"
@@ -44,18 +44,29 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
   }>({ isOpen: false, type: "departure" })
   const [showVerificationModal, setShowVerificationModal] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [customerPhone, setCustomerPhone] = useState<string>("")
 
-  // 사용자 정보 로드
+  // 사용자 정보 및 고객 프로필 로드
   useEffect(() => {
-    const loadUser = async () => {
+    const loadUserData = async () => {
       try {
         const user = await getUser()
         setCurrentUser(user)
+
+        // 고객 프로필에서 전화번호 가져오기
+        try {
+          const profile = await getCustomerProfile()
+          if (profile.phone) {
+            setCustomerPhone(profile.phone)
+          }
+        } catch (profileErr) {
+          console.error("고객 프로필 로드 오류:", profileErr)
+        }
       } catch (err) {
         console.error("사용자 정보 로드 오류:", err)
       }
     }
-    loadUser()
+    loadUserData()
   }, [])
 
   // 견적 계산
@@ -494,7 +505,7 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
         onClose={() => setShowVerificationModal(false)}
         onVerified={handleSubmitAfterVerification}
         customerName={currentUser?.user_metadata?.name || currentUser?.email || "고객"}
-        phone={currentUser?.user_metadata?.phone || ""}
+        phone={customerPhone}
       />
     </div>
   )

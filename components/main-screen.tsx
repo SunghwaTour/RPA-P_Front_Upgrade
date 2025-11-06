@@ -87,7 +87,7 @@ export function MainScreen({ user, onLogout }: MainScreenProps) {
         <div className="grid grid-cols-2 gap-3 mb-6">
           <Card
             className="p-6 bg-primary text-primary-foreground cursor-pointer hover:opacity-90 transition-opacity touch-manipulation"
-            onClick={() => setActiveTab("reservation")}
+            onClick={() => setActiveTab("myReservations")}
           >
             <div className="flex flex-col items-center text-center gap-3">
               <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">

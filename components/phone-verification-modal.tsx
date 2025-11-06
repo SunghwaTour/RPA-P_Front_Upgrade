@@ -31,6 +31,22 @@ export function PhoneVerificationModal({
   const [error, setError] = useState("")
   const [timeLeft, setTimeLeft] = useState(0)
 
+  // 전화번호 자동 포맷팅 (하이픈 자동 추가)
+  const formatPhoneNumber = (value: string) => {
+    // 숫자만 추출
+    const numbers = value.replace(/[^0-9]/g, "")
+
+    // 010-1234-5678 형식으로 변환
+    if (numbers.length <= 3) {
+      return numbers
+    } else if (numbers.length <= 7) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`
+    } else if (numbers.length <= 11) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`
+    }
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`
+  }
+
   // 타이머 효과
   useEffect(() => {
     if (timeLeft <= 0) return
@@ -73,9 +89,11 @@ export function PhoneVerificationModal({
       return
     }
 
-    // 휴대폰 번호 형식 간단 검증
-    const phoneRegex = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/
-    if (!phoneRegex.test(phoneNumber.replace(/-/g, ""))) {
+    // 숫자만 추출
+    const numbersOnly = phoneNumber.replace(/[^0-9]/g, "")
+
+    // 휴대폰 번호 형식 검증 (01로 시작, 10-11자리)
+    if (!numbersOnly.startsWith("01") || (numbersOnly.length !== 10 && numbersOnly.length !== 11)) {
       setError("올바른 휴대폰 번호 형식이 아닙니다.")
       return
     }
@@ -181,12 +199,16 @@ export function PhoneVerificationModal({
                   type="tel"
                   placeholder="010-1234-5678"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value)
+                    setPhoneNumber(formatted)
+                  }}
                   className="h-12 text-base"
                   disabled={isLoading}
+                  maxLength={13}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  하이픈(-)을 포함하여 입력해주세요.
+                  숫자만 입력하세요. 자동으로 하이픈이 추가됩니다.
                 </p>
               </div>
 
