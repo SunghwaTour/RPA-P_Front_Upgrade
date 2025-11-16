@@ -16,6 +16,8 @@ export type VehicleType = 'general' | 'solati'
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'partial_cancelled' | 'refunded'
 
+export type PaymentType = 'deposit' | 'remaining' | 'full'
+
 export interface Customer {
   id: string // Supabase UUID
   email: string
@@ -121,6 +123,9 @@ export interface Reservation {
   // 결제 정보
   payment_status?: PaymentStatusInfo
   latest_payment?: Payment
+  has_deposit_payment?: boolean
+  has_remaining_payment?: boolean
+  needs_remaining_payment?: boolean
 
   // 시간 정보
   created_at: string
@@ -138,6 +143,10 @@ export interface PaymentStatusInfo {
 export interface Payment {
   id: string // UUID
   reservation_id: number
+
+  // 결제 타입
+  payment_type: PaymentType
+  payment_type_display: string
 
   // 포트원 정보
   imp_uid: string | null
@@ -176,6 +185,7 @@ export interface Payment {
 
   // 메서드
   is_deposit_payment?: boolean
+  is_remaining_payment?: boolean
   can_cancel: boolean
 }
 

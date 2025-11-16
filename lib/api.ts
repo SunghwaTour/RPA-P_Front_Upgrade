@@ -83,9 +83,16 @@ export async function cancelReservation(id: number): Promise<{ message: string }
   })
 }
 
-// 결제 시작
+// 예약금 결제 시작
 export async function initiatePayment(reservationId: number): Promise<PaymentInitiateResponse> {
   return fetchAPI<PaymentInitiateResponse>(`/api/v1/reservation/${reservationId}/payment/initiate/`, {
+    method: "POST",
+  })
+}
+
+// 잔금 결제 시작
+export async function initiateRemainingPayment(reservationId: number): Promise<PaymentInitiateResponse> {
+  return fetchAPI<PaymentInitiateResponse>(`/api/v1/reservation/${reservationId}/payment/remaining/initiate/`, {
     method: "POST",
   })
 }

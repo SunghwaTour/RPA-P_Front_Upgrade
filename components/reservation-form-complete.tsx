@@ -14,9 +14,10 @@ import type { QuoteResponse, CreateReservationRequest } from "@/types"
 
 interface ReservationFormCompleteProps {
   onBack: () => void
+  initialRoundTrip?: boolean
 }
 
-export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps) {
+export function ReservationFormComplete({ onBack, initialRoundTrip = false }: ReservationFormCompleteProps) {
   const [formData, setFormData] = useState({
     departure_location: "",
     departure_coordinates: "",
@@ -29,7 +30,7 @@ export function ReservationFormComplete({ onBack }: ReservationFormCompleteProps
     passenger_count: 20,
     vehicle_count: 1,
     vehicle_type: "general" as "general" | "solati",
-    is_round_trip: false,
+    is_round_trip: initialRoundTrip,
     driver_accompanied: true,
     special_requirements: "",
   })

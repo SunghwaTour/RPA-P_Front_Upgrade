@@ -198,32 +198,33 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                 </div>
 
                 {/* Trip details: departure -> destination */}
-                <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
-                  {/* Departure */}
+                <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-start">
+                  {/* Departure location (always departure) */}
                   <div className="text-left">
-                    <h4 className="font-semibold text-sm text-foreground mb-1">
+                    <h4 className="font-semibold text-base text-foreground mb-1">
                       {reservation.departure_location}
                     </h4>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mb-1">
                       {new Date(reservation.departure_date).toLocaleDateString("ko-KR", {
                         month: "2-digit",
                         day: "2-digit"
                       })}{" "}
-                      {new Date(reservation.departure_date).toLocaleTimeString("ko-KR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false
-                      })}
+                      {reservation.departure_date.includes("오후") || reservation.departure_date.includes("오전")
+                        ? reservation.departure_date.split(" ").slice(-2).join(" ")
+                        : new Date(reservation.departure_date).toLocaleTimeString("ko-KR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true
+                          }).replace("AM", "오전").replace("PM", "오후")
+                      }
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">출발</p>
+                    <p className="text-xs text-muted-foreground">출발</p>
                   </div>
 
                   {/* Arrow icon */}
-                  <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center pt-1">
                     {reservation.return_date ? (
-                      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
+                      <img src="/myReservation/roundTrip.svg" alt="왕복" className="w-5 h-5" />
                     ) : (
                       <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -231,39 +232,32 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                     )}
                   </div>
 
-                  {/* Destination */}
+                  {/* Destination location (always destination) */}
                   <div className="text-right">
-                    <h4 className="font-semibold text-sm text-foreground mb-1">
+                    <h4 className="font-semibold text-base text-foreground mb-1">
                       {reservation.destination_location}
                     </h4>
-                    <p className="text-xs text-muted-foreground">
-                      {reservation.return_date ? (
-                        <>
+                    {reservation.return_date ? (
+                      <>
+                        <p className="text-sm text-muted-foreground mb-1">
                           {new Date(reservation.return_date).toLocaleDateString("ko-KR", {
                             month: "2-digit",
                             day: "2-digit"
                           })}{" "}
-                          {new Date(reservation.return_date).toLocaleTimeString("ko-KR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false
-                          })}
-                        </>
-                      ) : (
-                        <>
-                          {new Date(reservation.departure_date).toLocaleDateString("ko-KR", {
-                            month: "2-digit",
-                            day: "2-digit"
-                          })}{" "}
-                          {new Date(reservation.departure_date).toLocaleTimeString("ko-KR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false
-                          })}
-                        </>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">도착</p>
+                          {reservation.return_date.includes("오후") || reservation.return_date.includes("오전")
+                            ? reservation.return_date.split(" ").slice(-2).join(" ")
+                            : new Date(reservation.return_date).toLocaleTimeString("ko-KR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true
+                              }).replace("AM", "오전").replace("PM", "오후")
+                          }
+                        </p>
+                        <p className="text-xs text-muted-foreground">복귀</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">도착</p>
+                    )}
                   </div>
                 </div>
               </Card>

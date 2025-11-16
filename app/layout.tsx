@@ -29,7 +29,7 @@ export default function RootLayout({
       <head>
         <script src="https://cdn.iamport.kr/v1/iamport.js" async></script>
       </head>
-      <body className={`font-sans antialiased`}>
+      <body className={`font-sans antialiased bg-gray-50`}>
         {children}
         <Analytics />
       </body>
