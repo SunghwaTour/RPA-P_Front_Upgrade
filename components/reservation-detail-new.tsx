@@ -44,7 +44,7 @@ export function ReservationDetailNew({ reservation, onBack }: ReservationDetailN
   const handleRemainingPayment = async () => {
     try {
       const response = await initiateRemainingPayment(reservation.id)
-      await requestPortOnePayment(response.payment_config, reservation.id)
+      await requestPortOnePayment(response.payment_config)
       // 결제 완료 후 페이지 새로고침 또는 상태 업데이트
       window.location.reload()
     } catch (error: any) {
