@@ -43,7 +43,7 @@ export default function PaymentCallbackPage() {
           }, 2000)
         } else {
           setStatus("error")
-          setMessage(result.error || "결제 검증에 실패했습니다.")
+          setMessage(result.message || "결제 검증에 실패했습니다.")
           setTimeout(() => {
             router.push("/")
           }, 3000)
