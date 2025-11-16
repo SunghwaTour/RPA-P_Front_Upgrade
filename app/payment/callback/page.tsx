@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { verifyPayment } from "@/lib/api"
 import { Loader2, CheckCircle2, XCircle } from "lucide-react"
 
-export default function PaymentCallbackPage() {
+function PaymentCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
@@ -91,5 +91,21 @@ export default function PaymentCallbackPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function PaymentCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-lg p-8 text-center">
+          <Loader2 className="w-16 h-16 mx-auto mb-4 text-primary animate-spin" />
+          <h1 className="text-xl font-bold mb-2">결제 처리 중</h1>
+          <p className="text-gray-600">잠시만 기다려주세요...</p>
+        </div>
+      </div>
+    }>
+      <PaymentCallbackContent />
+    </Suspense>
   )
 }
