@@ -12,6 +12,12 @@ import { DispatchInfoCard } from "@/components/dispatch-info-card"
 import { requestPortOnePayment } from "@/lib/portone"
 import type { Reservation } from "@/types"
 
+declare global {
+  interface Window {
+    IMP?: any
+  }
+}
+
 interface ReservationDetailNewProps {
   reservation: Reservation
   onBack: () => void
@@ -44,7 +50,19 @@ export function ReservationDetailNew({ reservation, onBack }: ReservationDetailN
   const handleRemainingPayment = async () => {
     try {
       const response = await initiateRemainingPayment(reservation.id)
+
+      // PortOne SDK 초기화 확인
+      if (!window.IMP) {
+        alert("결제 모듈을 불러올 수 없습니다.")
+        return
+      }
+
+      // PortOne 초기화
+      window.IMP.init(process.env.NEXT_PUBLIC_PORTONE_USER_CODE)
+
+      // 결제 요청
       await requestPortOnePayment(response.payment_config)
+
       // 결제 완료 후 페이지 새로고침 또는 상태 업데이트
       window.location.reload()
     } catch (error: any) {
