@@ -123,6 +123,7 @@ export interface Reservation {
   // 결제 정보
   payment_status?: PaymentStatusInfo
   latest_payment?: Payment
+  payments?: Payment[]  // 모든 성공한 결제 내역
   has_deposit_payment?: boolean
   has_remaining_payment?: boolean
   needs_remaining_payment?: boolean

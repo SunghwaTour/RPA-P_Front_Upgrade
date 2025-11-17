@@ -248,15 +248,23 @@ export function ReservationDetailNew({ reservation, onBack }: ReservationDetailN
         </div>
 
         {/* 결제/환불 정보 카드 - 결제가 완료된 경우 */}
-        {reservation.latest_payment && reservation.latest_payment.status === 'paid' && (
+        {reservation.payments && reservation.payments.length > 0 ? (
           <PaymentInfoCard
-            payment={reservation.latest_payment}
+            payments={reservation.payments}
             onViewDetails={() => {
               // TODO: 결제/환불 내역 상세 페이지로 이동
-              console.log("결제 상세 보기")
+              console.log("결제 상세 보기", reservation.payments)
             }}
           />
-        )}
+        ) : reservation.latest_payment && reservation.latest_payment.status === 'paid' ? (
+          <PaymentInfoCard
+            payments={[reservation.latest_payment]}
+            onViewDetails={() => {
+              // TODO: 결제/환불 내역 상세 페이지로 이동
+              console.log("결제 상세 보기 (latest)", reservation.latest_payment?.id)
+            }}
+          />
+        ) : null}
 
         {/* 잔금 결제 카드 - 예약금만 결제하고 잔금이 남은 경우 */}
         {reservation.needs_remaining_payment && reservation.departure_date && (
