@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Menu } from "lucide-react"
 import { ReservationFormNew } from "@/components/reservation-form-new"
-import { MyReservationsNew } from "@/components/my-reservations-new"
 
 interface MainScreenProps {
   user: { name: string; email: string } | null
@@ -13,7 +13,8 @@ interface MainScreenProps {
 }
 
 export function MainScreen({ user, onLogout }: MainScreenProps) {
-  const [activeTab, setActiveTab] = useState<"home" | "reservation" | "myReservations">("home")
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState<"home" | "reservation">("home")
   const [showMenu, setShowMenu] = useState(false)
   const [reservationType, setReservationType] = useState<"roundtrip" | "oneway" | null>(null)
 
@@ -32,14 +33,9 @@ export function MainScreen({ user, onLogout }: MainScreenProps) {
       }}
       initialRoundTrip={reservationType === "roundtrip"}
       onReservationComplete={() => {
-        setActiveTab("myReservations")
-        setReservationType(null)
+        router.push("/reservations")
       }}
     />
-  }
-
-  if (activeTab === "myReservations") {
-    return <MyReservationsNew onBack={() => setActiveTab("home")} user={user} />
   }
 
   return (
@@ -78,7 +74,7 @@ export function MainScreen({ user, onLogout }: MainScreenProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setActiveTab("myReservations")}
+              onClick={() => router.push("/reservations")}
               className="text-sm"
             >
               내 예약
