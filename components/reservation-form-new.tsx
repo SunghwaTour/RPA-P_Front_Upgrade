@@ -39,6 +39,8 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
 
   const [showDepartureTimePicker, setShowDepartureTimePicker] = useState(false)
   const [showReturnTimePicker, setShowReturnTimePicker] = useState(false)
+  const [departureTimeSelected, setDepartureTimeSelected] = useState(false)
+  const [returnTimeSelected, setReturnTimeSelected] = useState(false)
   const [showDepartureDatePicker, setShowDepartureDatePicker] = useState(false)
   const [showReturnDatePicker, setShowReturnDatePicker] = useState(false)
 
@@ -83,6 +85,7 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
     }))
     setShowDepartureDatePicker(false)
     setShowDepartureTimePicker(false)
+    setDepartureTimeSelected(false)
   }
 
   // 도착 일정 초기화
@@ -94,6 +97,7 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
     }))
     setShowReturnDatePicker(false)
     setShowReturnTimePicker(false)
+    setReturnTimeSelected(false)
   }
 
   const handleQuoteSubmit = async () => {
@@ -426,8 +430,8 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
                   onClick={() => setShowDepartureTimePicker(!showDepartureTimePicker)}
                   className="w-full flex items-center justify-between py-4 touch-manipulation"
                 >
-                  <span className={formData.departure_time !== "09:00" ? "text-primary font-medium" : "text-foreground"}>
-                    {formData.departure_time !== "09:00" ? formData.departure_time : "출발 시간"}
+                  <span className={departureTimeSelected ? "text-primary font-medium" : "text-foreground"}>
+                    {departureTimeSelected ? formData.departure_time : "출발 시간"}
                   </span>
                   <span className="flex items-center gap-1 text-sm text-gray-500">
                     선택
@@ -444,6 +448,7 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
                     value={formData.departure_time}
                     onChange={(time) => {
                       setFormData(prev => ({ ...prev, departure_time: time }))
+                      setDepartureTimeSelected(true)
                       setShowDepartureTimePicker(false)
                     }}
                     onClose={() => setShowDepartureTimePicker(false)}
@@ -511,8 +516,8 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
                     onClick={() => setShowReturnTimePicker(!showReturnTimePicker)}
                     className="w-full flex items-center justify-between py-4 touch-manipulation"
                   >
-                    <span className={formData.return_time !== "09:00" ? "text-primary font-medium" : "text-foreground"}>
-                      {formData.return_time !== "09:00" ? formData.return_time : "도착 시간"}
+                    <span className={returnTimeSelected ? "text-primary font-medium" : "text-foreground"}>
+                      {returnTimeSelected ? formData.return_time : "도착 시간"}
                     </span>
                     <span className="flex items-center gap-1 text-sm text-gray-500">
                       선택
@@ -529,6 +534,7 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
                       value={formData.return_time}
                       onChange={(time) => {
                         setFormData(prev => ({ ...prev, return_time: time }))
+                        setReturnTimeSelected(true)
                         setShowReturnTimePicker(false)
                       }}
                       onClose={() => setShowReturnTimePicker(false)}
