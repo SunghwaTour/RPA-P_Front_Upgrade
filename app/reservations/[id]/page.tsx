@@ -5,20 +5,13 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, ArrowRight, Phone, Copy, AlertCircle } from "lucide-react"
-import { getReservation, cancelReservation, initiateRemainingPayment } from "@/lib/api"
+import { getReservation, cancelReservation } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
-import { PaymentPageNew } from "@/components/payment-page-new"
+import { BankTransferGuide } from "@/components/bank-transfer-guide"
 import { PaymentInfoCard } from "@/components/payment-info-card"
 import { RemainingPaymentCard } from "@/components/remaining-payment-card"
 import { DispatchInfoCard } from "@/components/dispatch-info-card"
-import { requestPortOnePayment } from "@/lib/portone"
 import type { Reservation } from "@/types"
-
-declare global {
-  interface Window {
-    IMP?: any
-  }
-}
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -83,25 +76,6 @@ export default function ReservationDetailPage({ params }: PageProps) {
     }
   }
 
-  const handleRemainingPayment = async () => {
-    if (!reservation) return
-    try {
-      const response = await initiateRemainingPayment(reservation.id)
-
-      if (!window.IMP) {
-        alert("결제 모듈을 불러올 수 없습니다.")
-        return
-      }
-
-      window.IMP.init(process.env.NEXT_PUBLIC_PORTONE_USER_CODE)
-      await requestPortOnePayment(response.payment_config)
-      window.location.reload()
-    } catch (error: any) {
-      console.error("잔금 결제 오류:", error)
-      alert(error.message || "잔금 결제 중 오류가 발생했습니다.")
-    }
-  }
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     alert("복사되었습니다")
@@ -141,10 +115,17 @@ export default function ReservationDetailPage({ params }: PageProps) {
 
   if (showPayment) {
     return (
-      <PaymentPageNew
+      <BankTransferGuide
         reservation={reservation}
-        onClose={() => setShowPayment(false)}
-        onSuccess={() => router.push("/reservations")}
+        onBack={() => setShowPayment(false)}
+        onComplete={() => {
+          setShowPayment(false)
+          const loadReservation = async () => {
+            const data = await getReservation(Number(id))
+            setReservation(data)
+          }
+          loadReservation()
+        }}
       />
     )
   }
@@ -303,6 +284,56 @@ export default function ReservationDetailPage({ params }: PageProps) {
               {reservation.special_requirements || '없음'}
             </p>
           </div>
+
+          {/* 입금 계좌 안내 */}
+          {(reservation.status === 'payment_waiting' || reservation.payment_option) && reservation.payment_option && (
+            <div className="mt-6">
+              <h2 className="text-base font-bold mb-3">입금 안내</h2>
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">은행</span>
+                    <span className="font-semibold text-blue-900">국민은행</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-700">계좌번호</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-blue-900">81430104241731</span>
+                      <button
+                        onClick={() => copyToClipboard("81430104241731")}
+                        className="p-1 rounded bg-blue-100 hover:bg-blue-200"
+                      >
+                        <Copy className="w-3 h-3 text-blue-600" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">예금주</span>
+                    <span className="font-semibold text-blue-900">김형주(킹버스)</span>
+                  </div>
+                </div>
+                <div className="border-t border-blue-200 mt-3 pt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-blue-700">
+                      {reservation.payment_option === 'full' ? '입금 금액' : '예약금'}
+                    </span>
+                    <span className="font-bold text-blue-900">
+                      {reservation.payment_option === 'full'
+                        ? `${Number(reservation.quote_amount || 0).toLocaleString()}원`
+                        : `${Number(reservation.deposit_amount || 0).toLocaleString()}원`
+                      }
+                    </span>
+                  </div>
+                  {reservation.payment_option === 'split' && (
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs text-blue-500">잔금</span>
+                      <span className="text-xs text-blue-500">{Number(reservation.remaining_amount || 0).toLocaleString()}원 (추후 안내)</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 결제/환불 정보 카드 */}
@@ -322,12 +353,12 @@ export default function ReservationDetailPage({ params }: PageProps) {
           />
         ) : null}
 
-        {/* 잔금 결제 카드 */}
+        {/* 잔금 결제 카드 - 계좌이체 방식에서는 잔금 안내만 표시 */}
         {reservation.needs_remaining_payment && reservation.departure_date && (
           <RemainingPaymentCard
             remainingAmount={reservation.remaining_amount}
             paymentDeadline={reservation.departure_date}
-            onPayClick={handleRemainingPayment}
+            onPayClick={() => setShowPayment(true)}
           />
         )}
 

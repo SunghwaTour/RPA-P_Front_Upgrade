@@ -18,6 +18,8 @@ export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'parti
 
 export type PaymentType = 'deposit' | 'remaining' | 'full'
 
+export type PaymentOption = 'full' | 'split'
+
 export interface Customer {
   id: string // Supabase UUID
   email: string
@@ -121,6 +123,7 @@ export interface Reservation {
   assigned_driver_id: number | null
 
   // 결제 정보
+  payment_option?: PaymentOption
   payment_status?: PaymentStatusInfo
   latest_payment?: Payment
   payments?: Payment[]  // 모든 성공한 결제 내역
@@ -271,6 +274,13 @@ export interface PaginatedResponse<T> {
   next: string | null
   previous: string | null
   results: T[]
+}
+
+export interface BankTransferResponse {
+  success: boolean
+  payment_option: PaymentOption
+  bank_info: { bank_name: string; account_number: string; account_holder: string }
+  amounts: { total: number; deposit: number; remaining: number }
 }
 
 // 포트원 결제 타입

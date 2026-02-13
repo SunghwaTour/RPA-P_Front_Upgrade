@@ -4,10 +4,9 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Bus, Calendar } from "lucide-react"
-import { getReservations, getReservation, cancelReservation, initiatePayment, verifyPayment } from "@/lib/api"
-import { loadPortOneScript, initPortOne, requestPortOnePayment, type PortOnePaymentRequest } from "@/lib/portone"
+import { getReservations, getReservation, cancelReservation } from "@/lib/api"
 import type { Reservation, ReservationStatus } from "@/types"
-import { PaymentScreen } from "./payment-screen"
+import { BankTransferGuide } from "./bank-transfer-guide"
 
 interface MyReservationsCompleteProps {
   onBack: () => void
@@ -84,58 +83,6 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
       loadReservations()
     } catch (err: any) {
       alert(err.message || "예약 취소 중 오류가 발생했습니다")
-    }
-  }
-
-  const handlePayment = async (reservationId: number) => {
-    try {
-      // 1. PortOne SDK 로드
-      await loadPortOneScript()
-      const userCode = process.env.NEXT_PUBLIC_PORTONE_USER_CODE
-      if (!userCode) {
-        throw new Error("PortOne 설정이 누락되었습니다")
-      }
-      initPortOne(userCode)
-
-      // 2. 결제 정보 가져오기
-      const paymentData = await initiatePayment(reservationId)
-
-      // 3. PortOne 결제 요청
-      const paymentRequest: PortOnePaymentRequest = {
-        pg: paymentData.payment_config.pg,
-        pay_method: paymentData.payment_config.pay_method,
-        merchant_uid: paymentData.payment_config.merchant_uid,
-        name: paymentData.payment_config.name,
-        amount: paymentData.payment_config.amount,
-        buyer_email: paymentData.payment_config.buyer_email,
-        buyer_name: paymentData.payment_config.buyer_name,
-        buyer_tel: paymentData.payment_config.buyer_tel,
-        m_redirect_url: `${window.location.origin}/payment/complete`,
-      }
-
-      const response = await requestPortOnePayment(paymentRequest)
-
-      // 4. 결제 결과 처리
-      if (response.success && response.imp_uid && response.merchant_uid) {
-        // 서버에서 결제 검증
-        const verifyResult = await verifyPayment({
-          imp_uid: response.imp_uid,
-          merchant_uid: response.merchant_uid,
-        })
-
-        if (verifyResult.success) {
-          alert("결제가 완료되었습니다!")
-          setSelectedReservation(null)
-          loadReservations() // 목록 새로고침
-        } else {
-          alert(`결제 검증 실패: ${verifyResult.message || "알 수 없는 오류"}`)
-        }
-      } else {
-        alert(`결제 실패: ${response.error_msg || "알 수 없는 오류"}`)
-      }
-    } catch (err: any) {
-      alert(err.message || "결제 시작 중 오류가 발생했습니다")
-      console.error("결제 오류:", err)
     }
   }
 
@@ -400,6 +347,48 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
               </p>
             </div>
 
+            {/* 입금 계좌 안내 */}
+            {(selectedReservation.status === 'payment_waiting' || selectedReservation.payment_option) && selectedReservation.payment_option && (
+              <div className="border-b pb-4">
+                <h3 className="font-semibold text-base mb-3">입금 안내</h3>
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">은행</span>
+                      <span className="font-semibold text-blue-900">국민은행</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-blue-700">계좌번호</span>
+                      <span className="font-semibold text-blue-900">81430104241731</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">예금주</span>
+                      <span className="font-semibold text-blue-900">김형주(킹버스)</span>
+                    </div>
+                  </div>
+                  <div className="border-t border-blue-200 mt-2 pt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-blue-700">
+                        {selectedReservation.payment_option === 'full' ? '입금 금액' : '예약금'}
+                      </span>
+                      <span className="font-bold text-blue-900">
+                        {selectedReservation.payment_option === 'full'
+                          ? `${Number(selectedReservation.quote_amount || 0).toLocaleString()}원`
+                          : `${Number(selectedReservation.deposit_amount || 0).toLocaleString()}원`
+                        }
+                      </span>
+                    </div>
+                    {selectedReservation.payment_option === 'split' && (
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-xs text-blue-500">잔금</span>
+                        <span className="text-xs text-blue-500">{Number(selectedReservation.remaining_amount || 0).toLocaleString()}원 (추후 안내)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 결제/환불 정보 */}
             {selectedReservation.status === "payment_completed" && selectedReservation.latest_payment && (
               <div className="pb-4">
@@ -460,10 +449,14 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
 
       {/* Payment Screen */}
       {showPaymentScreen && selectedReservation && (
-        <PaymentScreen
+        <BankTransferGuide
           reservation={selectedReservation}
           onBack={() => setShowPaymentScreen(false)}
-          onPayment={() => handlePayment(selectedReservation.id)}
+          onComplete={() => {
+            setShowPaymentScreen(false)
+            setSelectedReservation(null)
+            loadReservations()
+          }}
         />
       )}
     </div>

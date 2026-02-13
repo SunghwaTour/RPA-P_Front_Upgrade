@@ -9,7 +9,8 @@ import type {
   PaymentVerifyRequest,
   PaymentVerifyResponse,
   PaymentStatusResponse,
-  Payment
+  Payment,
+  BankTransferResponse
 } from "@/types"
 
 // API 호출 헬퍼 함수
@@ -95,6 +96,17 @@ export async function initiateRemainingPayment(reservationId: number): Promise<P
   return fetchAPI<PaymentInitiateResponse>(`/api/v1/reservation/${reservationId}/payment/remaining/initiate/`, {
     method: "POST",
   })
+}
+
+// 계좌이체 결제 방식 선택
+export async function selectBankTransfer(
+  reservationId: number,
+  paymentOption: 'full' | 'split'
+): Promise<BankTransferResponse> {
+  return fetchAPI<BankTransferResponse>(
+    `/api/v1/reservation/${reservationId}/payment/bank-transfer/`,
+    { method: "POST", body: JSON.stringify({ payment_option: paymentOption }) }
+  )
 }
 
 // 결제 검증
