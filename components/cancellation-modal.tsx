@@ -73,7 +73,7 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
     try {
       setIsCancelling(true)
       setError(null)
-      await cancelReservation(reservation.id, {
+      const result = await cancelReservation(reservation.id, {
         reason: "고객 요청",
         ...(needsRefundAccount ? {
           refund_bank_name: bankName,
@@ -81,6 +81,7 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
           refund_account_holder: accountHolder,
         } : {}),
       })
+      alert(result.message || "처리되었습니다.")
       onCancelled()
     } catch (err: any) {
       console.error("예약 취소 오류:", err)

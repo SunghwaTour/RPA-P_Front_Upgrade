@@ -24,6 +24,7 @@ const statusColors: Record<ReservationStatus, string> = {
   dispatched: "bg-purple-100 text-purple-700",
   in_progress: "bg-cyan-100 text-cyan-700",
   completed: "bg-gray-100 text-gray-700",
+  refund_requested: "bg-orange-100 text-orange-700",
   cancelled: "bg-red-100 text-red-700",
   payment_failed: "bg-red-100 text-red-700",
 }
@@ -38,6 +39,7 @@ const statusNames: Record<ReservationStatus, string> = {
   dispatched: "배차 완료",
   in_progress: "운행 중",
   completed: "운행 완료",
+  refund_requested: "환불 요청",
   cancelled: "취소됨",
   payment_failed: "결제 실패",
 }
@@ -467,7 +469,7 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
               )}
 
               {/* 예약 취소 */}
-              {!['cancelled', 'completed', 'dispatched', 'in_progress'].includes(selectedReservation.status) && (
+              {!['cancelled', 'completed', 'dispatched', 'in_progress', 'refund_requested'].includes(selectedReservation.status) && (
                 <div className="text-center pt-2">
                   <button
                     onClick={handleCancelReservation}
@@ -491,7 +493,6 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
             setShowCancelModal(false)
             setSelectedReservation(null)
             loadReservations()
-            alert("예약이 취소되었습니다.")
           }}
         />
       )}

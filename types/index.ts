@@ -10,6 +10,7 @@ export type ReservationStatus =
   | 'dispatched'        // 배차 완료
   | 'in_progress'       // 운행 중
   | 'completed'         // 운행 완료
+  | 'refund_requested'  // 환불 요청
   | 'cancelled'         // 취소됨
   | 'payment_failed'    // 결제 실패
 

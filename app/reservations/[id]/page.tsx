@@ -61,7 +61,6 @@ export default function ReservationDetailPage({ params }: PageProps) {
   }, [id, authChecking])
 
   const handleCancelled = () => {
-    alert("예약이 취소되었습니다.")
     router.push("/reservations")
   }
 
@@ -99,7 +98,7 @@ export default function ReservationDetailPage({ params }: PageProps) {
     )
   }
 
-  const canCancel = !['cancelled', 'completed', 'dispatched', 'in_progress'].includes(reservation.status)
+  const canCancel = !['cancelled', 'completed', 'dispatched', 'in_progress', 'refund_requested'].includes(reservation.status)
   const canPay = reservation.status === 'payment_waiting'
 
   if (showPayment) {
@@ -369,10 +368,12 @@ export default function ReservationDetailPage({ params }: PageProps) {
           />
         )}
 
-        {/* 취소된 예약 환불 정보 */}
-        {reservation.status === 'cancelled' && (reservation.refund_amount || reservation.cancel_reason) && (
-          <div className="bg-white rounded-lg p-4 mb-4 border-l-4 border-red-400" style={{ border: '1px solid rgba(242, 244, 246, 1)', borderLeft: '4px solid #ef4444' }}>
-            <h2 className="text-base font-bold mb-3 text-red-600">예약이 취소되었습니다</h2>
+        {/* 환불 요청 / 취소된 예약 환불 정보 */}
+        {(reservation.status === 'refund_requested' || reservation.status === 'cancelled') && (reservation.refund_amount || reservation.cancel_reason) && (
+          <div className="bg-white rounded-lg p-4 mb-4 border-l-4 border-red-400" style={{ border: '1px solid rgba(242, 244, 246, 1)', borderLeft: `4px solid ${reservation.status === 'refund_requested' ? '#f97316' : '#ef4444'}` }}>
+            <h2 className="text-base font-bold mb-3" style={{ color: reservation.status === 'refund_requested' ? '#f97316' : '#ef4444' }}>
+              {reservation.status === 'refund_requested' ? '환불 요청이 접수되었습니다' : '예약이 취소되었습니다'}
+            </h2>
             <div className="space-y-2 text-sm">
               {reservation.cancelled_at && (
                 <div className="flex justify-between">
