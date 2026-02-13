@@ -57,12 +57,12 @@ export function RemainingPaymentCard({ remainingAmount, paymentDeadline, onPayCl
         </div>
       </div>
 
-      {/* 결제하기 버튼 */}
+      {/* 잔금 입금 알리기 버튼 */}
       <Button
         onClick={onPayClick}
         className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-lg"
       >
-        결제하기
+        잔금 입금 알리기
       </Button>
     </div>
   )

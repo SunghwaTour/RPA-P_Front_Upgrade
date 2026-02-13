@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, ArrowRight, Phone, Copy } from "lucide-react"
-import { getReservation } from "@/lib/api"
+import { getReservation, notifyRemainingPayment } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 import { BankTransferGuide } from "@/components/bank-transfer-guide"
 import { PaymentInfoCard } from "@/components/payment-info-card"
@@ -341,12 +341,21 @@ export default function ReservationDetailPage({ params }: PageProps) {
           />
         ) : null}
 
-        {/* 잔금 결제 카드 - 계좌이체 방식에서는 잔금 안내만 표시 */}
+        {/* 잔금 입금 알림 카드 */}
         {reservation.needs_remaining_payment && reservation.departure_date && (
           <RemainingPaymentCard
             remainingAmount={reservation.remaining_amount}
             paymentDeadline={reservation.departure_date}
-            onPayClick={() => setShowPayment(true)}
+            onPayClick={async () => {
+              try {
+                await notifyRemainingPayment(reservation.id)
+                alert('잔금 입금 알림이 전송되었습니다.')
+                const data = await getReservation(Number(id))
+                setReservation(data)
+              } catch (err: any) {
+                alert(err.message || '알림 전송에 실패했습니다.')
+              }
+            }}
           />
         )}
 

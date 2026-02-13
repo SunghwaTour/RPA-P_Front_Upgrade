@@ -133,6 +133,9 @@ export interface Reservation {
   has_remaining_payment?: boolean
   needs_remaining_payment?: boolean
 
+  // 잔금 입금 알림
+  remaining_payment_notified_at?: string
+
   // 환불 정보
   refund_bank_name?: string
   refund_account_number?: string
