@@ -326,19 +326,9 @@ export default function ReservationDetailPage({ params }: PageProps) {
 
         {/* 결제/환불 정보 카드 */}
         {reservation.payments && reservation.payments.length > 0 ? (
-          <PaymentInfoCard
-            payments={reservation.payments}
-            onViewDetails={() => {
-              console.log("결제 상세 보기", reservation.payments)
-            }}
-          />
+          <PaymentInfoCard payments={reservation.payments} />
         ) : reservation.latest_payment && reservation.latest_payment.status === 'paid' ? (
-          <PaymentInfoCard
-            payments={[reservation.latest_payment]}
-            onViewDetails={() => {
-              console.log("결제 상세 보기 (latest)", reservation.latest_payment?.id)
-            }}
-          />
+          <PaymentInfoCard payments={[reservation.latest_payment]} />
         ) : null}
 
         {/* 잔금 입금 알림 카드 */}
