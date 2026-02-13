@@ -44,8 +44,8 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
   const [isCancelling, setIsCancelling] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 항상 백엔드에서 결제 여부 확인 (프론트 데이터 불일치 방지)
-  const hasPaidPayments = refundInfo ? refundInfo.paid_amount > 0 : false
+  // 환불 금액이 있을 때만 계좌 정보 필요 (환불 0원이면 계좌 불필요)
+  const needsRefundAccount = refundInfo ? refundInfo.refund_amount > 0 : false
 
   useEffect(() => {
     loadRefundInfo()
@@ -65,7 +65,7 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
   }
 
   const handleCancel = async () => {
-    if (hasPaidPayments && (!bankName || !accountNumber || !accountHolder)) {
+    if (needsRefundAccount && (!bankName || !accountNumber || !accountHolder)) {
       setError("환불 계좌 정보를 모두 입력해주세요.")
       return
     }
@@ -75,7 +75,7 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
       setError(null)
       await cancelReservation(reservation.id, {
         reason: "고객 요청",
-        ...(hasPaidPayments ? {
+        ...(needsRefundAccount ? {
           refund_bank_name: bankName,
           refund_account_number: accountNumber,
           refund_account_holder: accountHolder,
@@ -110,8 +110,8 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
           <h3 className="text-lg font-bold">예약 취소</h3>
         </div>
 
-        {/* Refund Policy */}
-        {hasPaidPayments && (
+        {/* 결제된 예약: 환불 정책 + 환불 정보 표시 */}
+        {refundInfo && refundInfo.paid_amount > 0 && (
           <>
             <div className="mb-4">
               <h4 className="text-sm font-semibold text-gray-700 mb-2">환불 정책 안내</h4>
@@ -120,7 +120,7 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
                   <div key={item.days} className="flex justify-between">
                     <span className="text-gray-600">출발 {item.days}</span>
                     <span className={`font-medium ${
-                      refundInfo && refundInfo.refund_rate === item.rate
+                      refundInfo.refund_rate === item.rate
                         ? 'text-primary font-bold'
                         : item.rate === 0 ? 'text-red-500' : 'text-gray-700'
                     }`}>
@@ -132,83 +132,87 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
             </div>
 
             {/* Current refund info */}
-            {refundInfo && (
-              <div className="mb-4 bg-orange-50 rounded-lg p-3 border border-orange-200">
-                <div className="space-y-2 text-sm">
+            <div className="mb-4 bg-orange-50 rounded-lg p-3 border border-orange-200">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-orange-700">현재 상태</span>
+                  <span className="font-semibold text-orange-900">
+                    출발 D-{refundInfo.days_until_departure}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-orange-700">결제 금액</span>
+                  <span className="font-semibold text-orange-900">
+                    {Number(refundInfo.paid_amount).toLocaleString()}원
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-orange-700">환불 예정</span>
+                  <span className="font-bold text-orange-900">
+                    {Number(refundInfo.refund_amount).toLocaleString()}원 ({refundInfo.refund_rate}%)
+                  </span>
+                </div>
+                {refundInfo.penalty_amount > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-orange-700">현재 상태</span>
-                    <span className="font-semibold text-orange-900">
-                      출발 D-{refundInfo.days_until_departure}
+                    <span className="text-red-600">위약금</span>
+                    <span className="font-semibold text-red-700">
+                      {Number(refundInfo.penalty_amount).toLocaleString()}원
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-orange-700">결제 금액</span>
-                    <span className="font-semibold text-orange-900">
-                      {Number(refundInfo.paid_amount).toLocaleString()}원
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-orange-700">환불 예정</span>
-                    <span className="font-bold text-orange-900">
-                      {Number(refundInfo.refund_amount).toLocaleString()}원 ({refundInfo.refund_rate}%)
-                    </span>
-                  </div>
-                  {refundInfo.penalty_amount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-red-600">위약금</span>
-                      <span className="font-semibold text-red-700">
-                        {Number(refundInfo.penalty_amount).toLocaleString()}원
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Refund account form */}
-            <div className="mb-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">환불 계좌 정보</h4>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">은행</label>
-                  <select
-                    value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                  >
-                    <option value="">은행을 선택해주세요</option>
-                    {BANKS.map((bank) => (
-                      <option key={bank} value={bank}>{bank}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">계좌번호</label>
-                  <input
-                    type="text"
-                    value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
-                    placeholder="계좌번호를 입력해주세요"
-                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">예금주</label>
-                  <input
-                    type="text"
-                    value={accountHolder}
-                    onChange={(e) => setAccountHolder(e.target.value)}
-                    placeholder="예금주명을 입력해주세요"
-                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                  />
-                </div>
+                )}
               </div>
             </div>
+
+            {/* 환불 금액이 0원이면 계좌 입력 불필요 */}
+            {needsRefundAccount ? (
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">환불 계좌 정보</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">은행</label>
+                    <select
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                    >
+                      <option value="">은행을 선택해주세요</option>
+                      {BANKS.map((bank) => (
+                        <option key={bank} value={bank}>{bank}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">계좌번호</label>
+                    <input
+                      type="text"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="계좌번호를 입력해주세요"
+                      className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">예금주</label>
+                    <input
+                      type="text"
+                      value={accountHolder}
+                      onChange={(e) => setAccountHolder(e.target.value)}
+                      placeholder="예금주명을 입력해주세요"
+                      className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-red-600 mb-4">
+                환불 금액이 없어 환불 계좌 입력이 필요하지 않습니다.
+              </p>
+            )}
           </>
         )}
 
-        {/* Non-paid reservation simple message */}
-        {!hasPaidPayments && (
+        {/* 결제 전 예약: 단순 취소 메시지 */}
+        {refundInfo && refundInfo.paid_amount === 0 && (
           <p className="text-gray-600 mb-6">
             예약을 취소하시겠습니까? 취소 후에는 되돌릴 수 없습니다.
           </p>
