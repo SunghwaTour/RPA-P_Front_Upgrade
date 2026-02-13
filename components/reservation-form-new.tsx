@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Minus, Plus, ChevronUp, ChevronDown } from "lucide-react"
+import { ArrowLeft, Minus, Plus, ChevronUp, ChevronDown, ArrowLeftRight, RotateCcw } from "lucide-react"
 import { LocationSearchModal } from "@/components/location-search-modal"
+import { DatePickerCalendar } from "@/components/date-picker-calendar"
 import { QuoteResultPage } from "@/components/quote-result-page"
 import { getQuote, createReservation } from "@/lib/api"
 import type { QuoteResponse } from "@/types"
@@ -36,13 +37,10 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
     type: "departure" | "destination"
   }>({ isOpen: false, type: "departure" })
 
-  const [expandedSections, setExpandedSections] = useState({
-    departure: false,
-    return: false,
-  })
-
   const [showDepartureTimePicker, setShowDepartureTimePicker] = useState(false)
   const [showReturnTimePicker, setShowReturnTimePicker] = useState(false)
+  const [showDepartureDatePicker, setShowDepartureDatePicker] = useState(false)
+  const [showReturnDatePicker, setShowReturnDatePicker] = useState(false)
 
   const [quote, setQuote] = useState<QuoteResponse | null>(null)
   const [loading, setLoading] = useState(false)
@@ -63,6 +61,39 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
       }))
     }
     setLocationModal({ isOpen: false, type: "departure" })
+  }
+
+  // 출발지 ↔ 도착지 교환
+  const handleSwapLocations = () => {
+    setFormData(prev => ({
+      ...prev,
+      departure_location: prev.destination_location,
+      departure_coordinates: prev.destination_coordinates,
+      destination_location: prev.departure_location,
+      destination_coordinates: prev.departure_coordinates,
+    }))
+  }
+
+  // 출발 일정 초기화
+  const handleResetDepartureSchedule = () => {
+    setFormData(prev => ({
+      ...prev,
+      departure_date: "",
+      departure_time: "09:00",
+    }))
+    setShowDepartureDatePicker(false)
+    setShowDepartureTimePicker(false)
+  }
+
+  // 도착 일정 초기화
+  const handleResetReturnSchedule = () => {
+    setFormData(prev => ({
+      ...prev,
+      return_date: "",
+      return_time: "09:00",
+    }))
+    setShowReturnDatePicker(false)
+    setShowReturnTimePicker(false)
   }
 
   const handleQuoteSubmit = async () => {
@@ -162,48 +193,41 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
           <div>
             <h2 className="text-base font-bold mb-3">출·도착지 입력</h2>
 
-            {/* 라디오 버튼 스타일 선택 */}
-            <div className="flex gap-3 mb-3">
+            {/* 출발지/도착지 입력 버튼 + 교환 버튼 */}
+            <div className="flex items-center gap-2 mb-3">
               <button
                 onClick={() => {
                   setLocationModal({ isOpen: true, type: "departure" })
                 }}
-                className={`flex-1 flex items-center gap-2 p-3 rounded-lg border transition-all ${
-                  formData.departure_location
-                    ? "border-gray-300 bg-white"
-                    : "border-gray-300 bg-white"
-                }`}
+                className="flex-1 flex items-center gap-2 p-3 rounded-full border border-gray-300 bg-white transition-all"
               >
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  formData.departure_location ? "border-gray-400" : "border-gray-300"
-                }`}>
-                  {formData.departure_location && (
-                    <div className="w-3 h-3 rounded-full bg-gray-400" />
-                  )}
-                </div>
-                <span className={formData.departure_location ? "text-foreground text-sm" : "text-gray-500 text-sm"}>
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span className={`text-sm truncate ${formData.departure_location ? "text-foreground" : "text-gray-500"}`}>
                   {formData.departure_location || "출발지 입력"}
                 </span>
+              </button>
+
+              {/* 교환 버튼 */}
+              <button
+                onClick={handleSwapLocations}
+                className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition-colors touch-manipulation flex-shrink-0"
+                aria-label="출발지와 도착지 교환"
+              >
+                <ArrowLeftRight className="w-4 h-4 text-gray-500" />
               </button>
 
               <button
                 onClick={() => {
                   setLocationModal({ isOpen: true, type: "destination" })
                 }}
-                className={`flex-1 flex items-center gap-2 p-3 rounded-lg border transition-all ${
-                  formData.destination_location
-                    ? "border-gray-300 bg-white"
-                    : "border-gray-300 bg-white"
-                }`}
+                className="flex-1 flex items-center gap-2 p-3 rounded-full border border-gray-300 bg-white transition-all"
               >
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  formData.destination_location ? "border-gray-400" : "border-gray-300"
-                }`}>
-                  {formData.destination_location && (
-                    <div className="w-3 h-3 rounded-full bg-gray-400" />
-                  )}
-                </div>
-                <span className={formData.destination_location ? "text-foreground text-sm" : "text-gray-500 text-sm"}>
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span className={`text-sm truncate ${formData.destination_location ? "text-foreground" : "text-gray-500"}`}>
                   {formData.destination_location || "도착지 입력"}
                 </span>
               </button>
@@ -347,161 +371,171 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
           </div>
 
           {/* 출발 정보 */}
-          <div className="bg-white rounded-lg border">
-            <button
-              onClick={() => setExpandedSections(prev => ({ ...prev, departure: !prev.departure }))}
-              className="w-full flex items-center justify-between p-4 touch-manipulation"
-            >
+          <div>
+            {/* 타이틀 + 일정 초기화 */}
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-bold">출발 정보</h2>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 font-normal">
-                  {formData.departure_date ? "입력 조정 가능" : "입력 필요"}
-                </span>
-                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                {expandedSections.departure ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
+              <button
+                onClick={handleResetDepartureSchedule}
+                className="flex items-center gap-1 text-sm text-foreground hover:text-foreground/80 touch-manipulation"
+              >
+                일정 초기화
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 날짜/시간 선택 영역 */}
+            <div className="bg-white rounded-lg border">
+              {/* 출발 날짜 */}
+              <div className="px-4">
+                <button
+                  onClick={() => setShowDepartureDatePicker(!showDepartureDatePicker)}
+                  className="w-full flex items-center justify-between py-4 touch-manipulation"
+                >
+                  <span className={formData.departure_date ? "text-primary font-medium" : "text-gray-500"}>
+                    {formData.departure_date
+                      ? new Date(formData.departure_date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')
+                      : "날짜 선택"}
+                  </span>
+                  <span className="flex items-center gap-1 text-sm text-gray-500">
+                    변경
+                    {showDepartureDatePicker ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </span>
+                </button>
+
+                {showDepartureDatePicker && (
+                  <DatePickerCalendar
+                    value={formData.departure_date}
+                    onChange={(date) => {
+                      setFormData(prev => ({ ...prev, departure_date: date }))
+                      setShowDepartureDatePicker(false)
+                    }}
+                    onClose={() => setShowDepartureDatePicker(false)}
+                    disablePast={true}
+                  />
                 )}
               </div>
-            </button>
 
-            {expandedSections.departure && (
-              <div className="px-4 pb-4 space-y-4 border-t">
-                {/* 출발 날짜 */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block mt-4">출발 날짜</label>
-                  <button
-                    onClick={() => {
-                      const input = document.getElementById('departure-date-input') as HTMLInputElement
-                      input?.showPicker()
-                    }}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-left flex items-center justify-between bg-white"
-                  >
-                    <span className={formData.departure_date ? "text-primary font-medium" : "text-gray-500"}>
-                      {formData.departure_date ? new Date(formData.departure_date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : "선택"}
-                    </span>
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <input
-                    id="departure-date-input"
-                    type="date"
-                    value={formData.departure_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, departure_date: e.target.value }))}
-                    className="sr-only"
-                  />
-                </div>
-
-                {/* 출발 시간 */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">출발 시간</label>
-                  <button
-                    onClick={() => setShowDepartureTimePicker(!showDepartureTimePicker)}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-left flex items-center justify-between bg-white"
-                  >
-                    <span className="text-foreground">{formData.departure_time}</span>
+              {/* 출발 시간 */}
+              <div className="px-4 border-t">
+                <button
+                  onClick={() => setShowDepartureTimePicker(!showDepartureTimePicker)}
+                  className="w-full flex items-center justify-between py-4 touch-manipulation"
+                >
+                  <span className={formData.departure_time !== "09:00" ? "text-primary font-medium" : "text-foreground"}>
+                    {formData.departure_time !== "09:00" ? formData.departure_time : "출발 시간"}
+                  </span>
+                  <span className="flex items-center gap-1 text-sm text-gray-500">
+                    선택
                     {showDepartureTimePicker ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                      <ChevronUp className="w-4 h-4" />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                      <ChevronDown className="w-4 h-4" />
                     )}
-                  </button>
+                  </span>
+                </button>
 
-                  {showDepartureTimePicker && (
-                    <TimeWheelPicker
-                      value={formData.departure_time}
-                      onChange={(time) => {
-                        setFormData(prev => ({ ...prev, departure_time: time }))
-                        setShowDepartureTimePicker(false)
-                      }}
-                      onClose={() => setShowDepartureTimePicker(false)}
-                    />
-                  )}
-                </div>
+                {showDepartureTimePicker && (
+                  <TimeWheelPicker
+                    value={formData.departure_time}
+                    onChange={(time) => {
+                      setFormData(prev => ({ ...prev, departure_time: time }))
+                      setShowDepartureTimePicker(false)
+                    }}
+                    onClose={() => setShowDepartureTimePicker(false)}
+                  />
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* 도착 정보 (왕복일 경우만) */}
           {formData.is_round_trip && (
-            <div className="bg-white rounded-lg border">
-              <button
-                onClick={() => setExpandedSections(prev => ({ ...prev, return: !prev.return }))}
-                className="w-full flex items-center justify-between p-4 touch-manipulation"
-              >
+            <div>
+              {/* 타이틀 + 일정 초기화 */}
+              <div className="flex items-center justify-between mb-3">
                 <h2 className="text-base font-bold">도착 정보</h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500 font-normal">
-                    {formData.return_date ? "입력 조정 가능" : "입력 필요"}
-                  </span>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  {expandedSections.return ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                <button
+                  onClick={handleResetReturnSchedule}
+                  className="flex items-center gap-1 text-sm text-foreground hover:text-foreground/80 touch-manipulation"
+                >
+                  일정 초기화
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 날짜/시간 선택 영역 */}
+              <div className="bg-white rounded-lg border">
+                {/* 도착 날짜 */}
+                <div className="px-4">
+                  <button
+                    onClick={() => setShowReturnDatePicker(!showReturnDatePicker)}
+                    className="w-full flex items-center justify-between py-4 touch-manipulation"
+                  >
+                    <span className={formData.return_date ? "text-primary font-medium" : "text-gray-500"}>
+                      {formData.return_date
+                        ? new Date(formData.return_date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')
+                        : "도착 날짜"}
+                    </span>
+                    <span className="flex items-center gap-1 text-sm text-gray-500">
+                      선택
+                      {showReturnDatePicker ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </span>
+                  </button>
+
+                  {showReturnDatePicker && (
+                    <DatePickerCalendar
+                      value={formData.return_date}
+                      onChange={(date) => {
+                        setFormData(prev => ({ ...prev, return_date: date }))
+                        setShowReturnDatePicker(false)
+                      }}
+                      onClose={() => setShowReturnDatePicker(false)}
+                      minDate={formData.departure_date}
+                      disablePast={true}
+                    />
                   )}
                 </div>
-              </button>
 
-              {expandedSections.return && (
-                <div className="px-4 pb-4 space-y-4 border-t">
-                  {/* 도착 날짜 */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block mt-4">도착 날짜</label>
-                    <button
-                      onClick={() => {
-                        const input = document.getElementById('return-date-input') as HTMLInputElement
-                        input?.showPicker()
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg text-left flex items-center justify-between bg-white"
-                    >
-                      <span className={formData.return_date ? "text-primary font-medium" : "text-gray-500"}>
-                        {formData.return_date ? new Date(formData.return_date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : "선택"}
-                      </span>
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                    </button>
-                    <input
-                      id="return-date-input"
-                      type="date"
-                      value={formData.return_date}
-                      onChange={(e) => setFormData(prev => ({ ...prev, return_date: e.target.value }))}
-                      className="sr-only"
-                      min={formData.departure_date}
-                    />
-                  </div>
-
-                  {/* 도착 시간 */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">도착 시간</label>
-                    <button
-                      onClick={() => setShowReturnTimePicker(!showReturnTimePicker)}
-                      className="w-full p-3 border border-gray-300 rounded-lg text-left flex items-center justify-between bg-white"
-                    >
-                      <span className="text-foreground">{formData.return_time}</span>
+                {/* 도착 시간 */}
+                <div className="px-4 border-t">
+                  <button
+                    onClick={() => setShowReturnTimePicker(!showReturnTimePicker)}
+                    className="w-full flex items-center justify-between py-4 touch-manipulation"
+                  >
+                    <span className={formData.return_time !== "09:00" ? "text-primary font-medium" : "text-foreground"}>
+                      {formData.return_time !== "09:00" ? formData.return_time : "도착 시간"}
+                    </span>
+                    <span className="flex items-center gap-1 text-sm text-gray-500">
+                      선택
                       {showReturnTimePicker ? (
-                        <ChevronUp className="w-5 h-5 text-gray-400" />
+                        <ChevronUp className="w-4 h-4" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                        <ChevronDown className="w-4 h-4" />
                       )}
-                    </button>
+                    </span>
+                  </button>
 
-                    {showReturnTimePicker && (
-                      <TimeWheelPicker
-                        value={formData.return_time}
-                        onChange={(time) => {
-                          setFormData(prev => ({ ...prev, return_time: time }))
-                          setShowReturnTimePicker(false)
-                        }}
-                        onClose={() => setShowReturnTimePicker(false)}
-                      />
-                    )}
-                  </div>
+                  {showReturnTimePicker && (
+                    <TimeWheelPicker
+                      value={formData.return_time}
+                      onChange={(time) => {
+                        setFormData(prev => ({ ...prev, return_time: time }))
+                        setShowReturnTimePicker(false)
+                      }}
+                      onClose={() => setShowReturnTimePicker(false)}
+                    />
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           )}
 

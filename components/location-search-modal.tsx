@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X, Search, MapPin, Navigation } from "lucide-react"
+import { X, Search, MapPin, Crosshair } from "lucide-react"
 
 interface LocationSearchModalProps {
   isOpen: boolean
@@ -19,9 +19,22 @@ export function LocationSearchModal({ isOpen, onClose, onSelect, title }: Locati
   const [map, setMap] = useState<any>(null)
   const [selectedPlace, setSelectedPlace] = useState<any>(null)
   const [isLoadingKakao, setIsLoadingKakao] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const markerRef = useRef<any>(null)
+
+  // 모달 열림/닫힘 애니메이션 제어
+  useEffect(() => {
+    if (isOpen) {
+      // 약간의 지연 후 visible 상태로 전환 (애니메이션 트리거)
+      requestAnimationFrame(() => {
+        setIsVisible(true)
+      })
+    } else {
+      setIsVisible(false)
+    }
+  }, [isOpen])
 
   // 카카오맵 스크립트 로드
   useEffect(() => {
@@ -273,15 +286,32 @@ export function LocationSearchModal({ isOpen, onClose, onSelect, title }: Locati
     onClose()
   }
 
+  // 배경 오버레이 클릭 핸들러
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // 오버레이 자체를 클릭한 경우에만 닫기 (모달 내부 클릭은 무시)
+    if (e.target === e.currentTarget) {
+      handleClose()
+    }
+  }
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-      <div className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] max-w-[600px] sm:rounded-t-3xl flex flex-col">
+    <div
+      className={`fixed inset-0 z-50 flex items-end justify-center transition-colors duration-300 ${
+        isVisible ? "bg-black/50" : "bg-transparent"
+      }`}
+      onClick={handleOverlayClick}
+    >
+      <div
+        className={`bg-white w-full max-h-[90vh] max-w-[600px] rounded-t-3xl flex flex-col transition-transform duration-300 ease-out ${
+          isVisible ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-bold">{title}</h2>
-          <Button variant="ghost" size="icon" onClick={handleClose}>
+          <Button variant="ghost" size="icon" onClick={handleClose} className="touch-manipulation">
             <X className="w-5 h-5" />
           </Button>
         </div>
@@ -290,24 +320,15 @@ export function LocationSearchModal({ isOpen, onClose, onSelect, title }: Locati
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* 검색 바 */}
           <div className="relative">
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="주소나 장소명을 입력하세요 (2글자 이상)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-6 rounded-full border-2 border-gray-200 focus:border-primary"
-                />
-              </div>
-              <Button
-                onClick={handleUseCurrentLocation}
-                variant="outline"
-                className="gap-2 h-[52px] px-4 rounded-full"
-              >
-                <Navigation className="w-5 h-5" />
-              </Button>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="주소나 장소명을 입력하세요 (2글자 이상)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-6 rounded-full border-2 border-gray-200 focus:border-primary"
+              />
             </div>
 
             {/* 검색 결과 드롭다운 */}
@@ -317,7 +338,7 @@ export function LocationSearchModal({ isOpen, onClose, onSelect, title }: Locati
                   <button
                     key={index}
                     onClick={() => handleResultClick(place)}
-                    className="w-full text-left p-3 hover:bg-blue-50 transition-colors border-b last:border-b-0"
+                    className="w-full text-left p-3 hover:bg-blue-50 transition-colors border-b last:border-b-0 touch-manipulation"
                   >
                     <div className="flex items-start gap-3">
                       <MapPin className="w-4 h-4 text-red-500 mt-1 flex-shrink-0" />
@@ -334,6 +355,15 @@ export function LocationSearchModal({ isOpen, onClose, onSelect, title }: Locati
               </div>
             )}
           </div>
+
+          {/* 현재 위치 사용하기 버튼 */}
+          <button
+            onClick={handleUseCurrentLocation}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors touch-manipulation"
+          >
+            현재 위치 사용하기
+            <Crosshair className="w-4 h-4" />
+          </button>
 
           {/* 지도 */}
           <div className="space-y-3">
@@ -352,7 +382,7 @@ export function LocationSearchModal({ isOpen, onClose, onSelect, title }: Locati
               </div>
               <Button
                 onClick={handleConfirm}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl"
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl touch-manipulation"
               >
                 이 위치 선택
               </Button>
