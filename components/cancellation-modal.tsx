@@ -44,15 +44,11 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
   const [isCancelling, setIsCancelling] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const hasPaidPayments = reservation.payments?.some(p => p.status === 'paid') ||
-    (reservation.latest_payment?.status === 'paid')
+  // 항상 백엔드에서 결제 여부 확인 (프론트 데이터 불일치 방지)
+  const hasPaidPayments = refundInfo ? refundInfo.paid_amount > 0 : false
 
   useEffect(() => {
-    if (hasPaidPayments) {
-      loadRefundInfo()
-    } else {
-      setLoading(false)
-    }
+    loadRefundInfo()
   }, [])
 
   const loadRefundInfo = async () => {
@@ -61,7 +57,8 @@ export function CancellationModal({ reservation, onClose, onCancelled }: Cancell
       setRefundInfo(info)
     } catch (err: any) {
       console.error("환불 정보 조회 오류:", err)
-      setError("환불 정보를 불러올 수 없습니다.")
+      // API 실패 시 결제 없는 것으로 처리 (단순 취소 허용)
+      setRefundInfo({ paid_amount: 0, refund_rate: 0, refund_amount: 0, penalty_amount: 0, days_until_departure: 0 })
     } finally {
       setLoading(false)
     }
