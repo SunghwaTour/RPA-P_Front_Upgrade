@@ -286,7 +286,7 @@ export default function ReservationDetailPage({ params }: PageProps) {
           </div>
 
           {/* 입금 계좌 안내 */}
-          {(reservation.status === 'payment_waiting' || reservation.payment_option) && reservation.payment_option && (
+          {(reservation.status === 'payment_waiting' || reservation.status === 'deposit_pending' || reservation.payment_option) && reservation.payment_option && (
             <div className="mt-6">
               <h2 className="text-base font-bold mb-3">입금 안내</h2>
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">

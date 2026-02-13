@@ -17,6 +17,7 @@ const statusColors: Record<ReservationStatus, string> = {
   pending: "bg-yellow-100 text-yellow-700",
   approved: "bg-blue-100 text-blue-700",
   payment_waiting: "bg-orange-100 text-orange-700",
+  deposit_pending: "bg-amber-100 text-amber-700",
   payment_completed: "bg-green-100 text-green-700",
   confirmed: "bg-indigo-100 text-indigo-700",
   dispatched: "bg-purple-100 text-purple-700",
@@ -30,6 +31,7 @@ const statusNames: Record<ReservationStatus, string> = {
   pending: "예약 대기",
   approved: "승인됨",
   payment_waiting: "결제 대기",
+  deposit_pending: "입금 확인 대기",
   payment_completed: "결제 완료",
   confirmed: "예약 확정",
   dispatched: "배차 완료",
@@ -348,7 +350,7 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
             </div>
 
             {/* 입금 계좌 안내 */}
-            {(selectedReservation.status === 'payment_waiting' || selectedReservation.payment_option) && selectedReservation.payment_option && (
+            {(selectedReservation.status === 'payment_waiting' || selectedReservation.status === 'deposit_pending' || selectedReservation.payment_option) && selectedReservation.payment_option && (
               <div className="border-b pb-4">
                 <h3 className="font-semibold text-base mb-3">입금 안내</h3>
                 <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">

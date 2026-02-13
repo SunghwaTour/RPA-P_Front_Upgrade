@@ -4,6 +4,7 @@ export type ReservationStatus =
   | 'pending'           // 예약 대기
   | 'approved'          // 승인됨 (deprecated)
   | 'payment_waiting'   // 결제 대기
+  | 'deposit_pending'   // 입금 확인 대기
   | 'payment_completed' // 결제 완료
   | 'confirmed'         // 예약 확정
   | 'dispatched'        // 배차 완료
