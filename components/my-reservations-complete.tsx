@@ -4,9 +4,10 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Bus, Calendar } from "lucide-react"
-import { getReservations, getReservation, cancelReservation } from "@/lib/api"
+import { getReservations, getReservation } from "@/lib/api"
 import type { Reservation, ReservationStatus } from "@/types"
 import { BankTransferGuide } from "./bank-transfer-guide"
+import { CancellationModal } from "./cancellation-modal"
 
 interface MyReservationsCompleteProps {
   onBack: () => void
@@ -47,6 +48,8 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
   const [error, setError] = useState<string | null>(null)
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
   const [showPaymentScreen, setShowPaymentScreen] = useState(false)
+  const [showPaymentDetail, setShowPaymentDetail] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
 
   useEffect(() => {
     loadReservations()
@@ -75,17 +78,8 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
     }
   }
 
-  const handleCancelReservation = async (id: number) => {
-    if (!confirm("정말 예약을 취소하시겠습니까?")) return
-
-    try {
-      await cancelReservation(id)
-      alert("예약이 취소되었습니다")
-      setSelectedReservation(null)
-      loadReservations()
-    } catch (err: any) {
-      alert(err.message || "예약 취소 중 오류가 발생했습니다")
-    }
+  const handleCancelReservation = () => {
+    setShowCancelModal(true)
   }
 
   return (
@@ -429,24 +423,77 @@ export function MyReservationsComplete({ onBack }: MyReservationsCompleteProps) 
                   결제하기
                 </Button>
               )}
-              {selectedReservation.status === "payment_completed" && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    // TODO: Navigate to payment history detail page
-                    alert("결제/환불 내역 페이지로 이동 (구현 예정)")
-                  }}
-                >
-                  결제/환불 내역 자세히 보기
-                  <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Button>
+              {(selectedReservation.status === "payment_completed" || selectedReservation.payments?.length) && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowPaymentDetail(!showPaymentDetail)}
+                  >
+                    결제/환불 내역 자세히 보기
+                    <svg className={`w-4 h-4 ml-2 transition-transform ${showPaymentDetail ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Button>
+                  {showPaymentDetail && selectedReservation.payments && (
+                    <div className="mt-3 space-y-2">
+                      {selectedReservation.payments.map((payment) => (
+                        <div key={payment.id} className="bg-gray-50 rounded-lg p-3 text-sm">
+                          <div className="flex justify-between mb-1">
+                            <span className="text-gray-500">{payment.payment_type_display || payment.payment_type}</span>
+                            <span className={`font-medium ${payment.status === 'paid' ? 'text-green-600' : payment.status === 'cancelled' || payment.status === 'refunded' ? 'text-red-600' : 'text-gray-700'}`}>
+                              {Number(payment.amount).toLocaleString()}원
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-400">
+                            <span>
+                              {payment.paid_at
+                                ? new Date(payment.paid_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+                                : '-'
+                              }
+                            </span>
+                            <span>
+                              {payment.status === 'paid' ? '결제 완료' :
+                               payment.status === 'cancelled' ? '취소됨' :
+                               payment.status === 'refunded' ? '환불됨' :
+                               payment.status === 'pending' ? '대기중' : payment.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* 예약 취소 */}
+              {!['cancelled', 'completed', 'dispatched', 'in_progress'].includes(selectedReservation.status) && (
+                <div className="text-center pt-2">
+                  <button
+                    onClick={handleCancelReservation}
+                    className="text-gray-500 underline text-sm"
+                  >
+                    예약 취소
+                  </button>
+                </div>
               )}
             </div>
           </div>
         </div>
+      )}
+
+      {/* Cancel Modal */}
+      {showCancelModal && selectedReservation && (
+        <CancellationModal
+          reservation={selectedReservation}
+          onClose={() => setShowCancelModal(false)}
+          onCancelled={() => {
+            setShowCancelModal(false)
+            setSelectedReservation(null)
+            loadReservations()
+            alert("예약이 취소되었습니다.")
+          }}
+        />
       )}
 
       {/* Payment Screen */}

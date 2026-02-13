@@ -132,6 +132,16 @@ export interface Reservation {
   has_remaining_payment?: boolean
   needs_remaining_payment?: boolean
 
+  // 환불 정보
+  refund_bank_name?: string
+  refund_account_number?: string
+  refund_account_holder?: string
+  refund_amount?: number
+  refund_rate?: number
+  cancelled_at?: string
+  cancel_reason?: string
+  refund_completed_at?: string
+
   // 시간 정보
   created_at: string
   updated_at: string

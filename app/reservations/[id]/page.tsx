@@ -4,13 +4,14 @@ import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, ArrowRight, Phone, Copy, AlertCircle } from "lucide-react"
-import { getReservation, cancelReservation } from "@/lib/api"
+import { ArrowLeft, ArrowRight, Phone, Copy } from "lucide-react"
+import { getReservation } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
 import { BankTransferGuide } from "@/components/bank-transfer-guide"
 import { PaymentInfoCard } from "@/components/payment-info-card"
 import { RemainingPaymentCard } from "@/components/remaining-payment-card"
 import { DispatchInfoCard } from "@/components/dispatch-info-card"
+import { CancellationModal } from "@/components/cancellation-modal"
 import type { Reservation } from "@/types"
 
 interface PageProps {
@@ -25,7 +26,6 @@ export default function ReservationDetailPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null)
   const [authChecking, setAuthChecking] = useState(true)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
-  const [isCancelling, setIsCancelling] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
 
   // 인증 체크
@@ -60,20 +60,9 @@ export default function ReservationDetailPage({ params }: PageProps) {
     loadReservation()
   }, [id, authChecking])
 
-  const handleCancel = async () => {
-    if (!reservation) return
-    try {
-      setIsCancelling(true)
-      await cancelReservation(reservation.id)
-      alert("예약이 취소되었습니다.")
-      router.push("/reservations")
-    } catch (error: any) {
-      console.error("예약 취소 오류:", error)
-      alert(error.response?.data?.error || "예약 취소 중 오류가 발생했습니다.")
-    } finally {
-      setIsCancelling(false)
-      setShowCancelDialog(false)
-    }
+  const handleCancelled = () => {
+    alert("예약이 취소되었습니다.")
+    router.push("/reservations")
   }
 
   const copyToClipboard = (text: string) => {
@@ -380,6 +369,55 @@ export default function ReservationDetailPage({ params }: PageProps) {
           />
         )}
 
+        {/* 취소된 예약 환불 정보 */}
+        {reservation.status === 'cancelled' && (reservation.refund_amount || reservation.cancel_reason) && (
+          <div className="bg-white rounded-lg p-4 mb-4 border-l-4 border-red-400" style={{ border: '1px solid rgba(242, 244, 246, 1)', borderLeft: '4px solid #ef4444' }}>
+            <h2 className="text-base font-bold mb-3 text-red-600">예약이 취소되었습니다</h2>
+            <div className="space-y-2 text-sm">
+              {reservation.cancelled_at && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">취소일</span>
+                  <span className="font-medium">
+                    {new Date(reservation.cancelled_at).toLocaleDateString('ko-KR', {
+                      year: 'numeric', month: '2-digit', day: '2-digit'
+                    })}
+                  </span>
+                </div>
+              )}
+              {reservation.cancel_reason && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">취소 사유</span>
+                  <span className="font-medium">{reservation.cancel_reason}</span>
+                </div>
+              )}
+              {reservation.refund_rate !== undefined && reservation.refund_rate !== null && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">환불 비율</span>
+                  <span className="font-medium">{reservation.refund_rate}%</span>
+                </div>
+              )}
+              {reservation.refund_amount !== undefined && reservation.refund_amount !== null && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">환불 금액</span>
+                  <span className="font-bold text-red-600">{Number(reservation.refund_amount).toLocaleString()}원</span>
+                </div>
+              )}
+              {reservation.refund_bank_name && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">환불 계좌</span>
+                  <span className="font-medium">{reservation.refund_bank_name} {reservation.refund_account_number}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-gray-500">환불 상태</span>
+                <span className={`font-medium ${reservation.refund_completed_at ? 'text-green-600' : 'text-orange-600'}`}>
+                  {reservation.refund_completed_at ? '환불 완료' : reservation.refund_amount ? '환불 처리 중' : '-'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 예약 취소 링크 */}
         {canCancel && (
           <div className="text-center">
@@ -405,36 +443,13 @@ export default function ReservationDetailPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* 취소 확인 다이얼로그 */}
-      {showCancelDialog && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-[400px] p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="w-6 h-6 text-orange-500" />
-              <h3 className="text-lg font-bold">예약을 취소하시겠습니까?</h3>
-            </div>
-            <p className="text-gray-600 mb-6">
-              취소 후에는 되돌릴 수 없습니다.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowCancelDialog(false)}
-                className="flex-1"
-                disabled={isCancelling}
-              >
-                아니요
-              </Button>
-              <Button
-                onClick={handleCancel}
-                disabled={isCancelling}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-              >
-                {isCancelling ? "취소 중..." : "네, 취소합니다"}
-              </Button>
-            </div>
-          </Card>
-        </div>
+      {/* 취소 모달 */}
+      {showCancelDialog && reservation && (
+        <CancellationModal
+          reservation={reservation}
+          onClose={() => setShowCancelDialog(false)}
+          onCancelled={handleCancelled}
+        />
       )}
     </div>
   )

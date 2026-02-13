@@ -77,11 +77,29 @@ export async function getReservation(id: number): Promise<Reservation> {
   return fetchAPI<Reservation>(`/api/v1/reservation/${id}/`)
 }
 
-// 예약 취소
-export async function cancelReservation(id: number): Promise<{ message: string }> {
-  return fetchAPI<{ message: string }>(`/api/v1/reservation/${id}/cancel/`, {
-    method: "POST",
-  })
+// 환불 정보 조회 (취소 전 미리보기)
+export async function getRefundInfo(reservationId: number) {
+  return fetchAPI<{
+    paid_amount: number
+    refund_rate: number
+    refund_amount: number
+    penalty_amount: number
+    days_until_departure: number
+    departure_date: string | null
+  }>(`/api/v1/reservation/${reservationId}/refund-info/`)
+}
+
+// 예약 취소 (환불 계좌 포함)
+export async function cancelReservation(id: number, data?: {
+  reason?: string
+  refund_bank_name?: string
+  refund_account_number?: string
+  refund_account_holder?: string
+}): Promise<{ message: string; refund_rate?: number; refund_amount?: number }> {
+  return fetchAPI<{ message: string; refund_rate?: number; refund_amount?: number }>(
+    `/api/v1/reservation/${id}/cancel/`,
+    { method: "POST", body: JSON.stringify(data || {}) }
+  )
 }
 
 // 예약금 결제 시작
