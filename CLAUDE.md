@@ -108,7 +108,7 @@ This is a Next.js App Router application with a robust authentication and API in
 - **Form state**: Local state in form components
 - **API state**: Async state management with loading/error handling
 
-### Backend Integration
+### Backend Integration 
 
 **API Base URL**: Configurable via `NEXT_PUBLIC_API_BASE_URL` environment variable
 
