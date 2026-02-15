@@ -38,6 +38,7 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
   const [quote, setQuote] = useState<QuoteResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [showQuote, setShowQuote] = useState(false)
   const [mapModal, setMapModal] = useState<{
     isOpen: boolean
@@ -73,18 +74,37 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
   // 견적 계산
   const handleCalculateQuote = async () => {
     setError(null)
+    setFieldErrors({})
     setLoading(true)
 
     try {
       // 유효성 검사
-      if (!formData.departure_location || !formData.destination_location) {
-        throw new Error("출발지와 도착지를 입력해주세요")
+      const errors: Record<string, string> = {}
+
+      if (!formData.departure_location) {
+        errors.departure_location = "출발지를 선택해주세요"
+      }
+      if (!formData.destination_location) {
+        errors.destination_location = "도착지를 선택해주세요"
       }
       if (!formData.departure_date || !formData.departure_time) {
-        throw new Error("출발 날짜와 시간을 입력해주세요")
+        errors.departure_date = "출발 날짜와 시간을 입력해주세요"
       }
       if (formData.passenger_count < 1 || formData.passenger_count > 500) {
-        throw new Error("인원수는 1~500명 사이여야 합니다")
+        errors.passenger_count = "인원수는 1~500명 사이여야 합니다"
+      }
+
+      // 클라이언트 사전 검증: 수용 인원 초과
+      const maxCapacity = formData.vehicle_type === "solati" ? 15 : 45
+      if (formData.passenger_count > formData.vehicle_count * maxCapacity) {
+        const minVehicles = Math.ceil(formData.passenger_count / maxCapacity)
+        errors.capacity = `${maxCapacity}인승 차량 ${formData.vehicle_count}대로는 ${formData.passenger_count}명을 수용할 수 없습니다. (최소 ${minVehicles}대 필요)`
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors)
+        setLoading(false)
+        return
       }
 
       const departureDateTime = `${formData.departure_date}T${formData.departure_time}:00`
@@ -110,7 +130,12 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
       setQuote(quoteResponse)
       setShowQuote(true)
     } catch (err: any) {
-      setError(err.message || "견적 조회 중 오류가 발생했습니다")
+      // 백엔드에서 field 정보가 있으면 해당 필드에 에러 표시
+      if (err.field) {
+        setFieldErrors({ [err.field]: err.message })
+      } else {
+        setError(err.message || "견적 조회 중 오류가 발생했습니다")
+      }
       console.error("견적 조회 오류:", err)
     } finally {
       setLoading(false)
@@ -187,7 +212,7 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
 
       {/* 폼 */}
       <main className="px-4 py-6 pb-24">
-        {error && (
+        {error && Object.keys(fieldErrors).length === 0 && (
           <Card className="p-4 mb-4 bg-red-50 border-red-200">
             <p className="text-red-600 text-sm">{error}</p>
           </Card>
@@ -195,7 +220,7 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
 
         <div className="space-y-4">
           {/* 출발지 */}
-          <Card className="p-4">
+          <Card className={`p-4 ${fieldErrors.departure_location ? "border-red-400 bg-red-50" : ""}`}>
             <Label className="flex items-center gap-2 mb-2 text-base font-semibold">
               <MapPin className="w-5 h-5 text-green-600" />
               출발지
@@ -223,10 +248,13 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
                 좌표: {formData.departure_coordinates}
               </p>
             )}
+            {fieldErrors.departure_location && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.departure_location}</p>
+            )}
           </Card>
 
           {/* 도착지 */}
-          <Card className="p-4">
+          <Card className={`p-4 ${fieldErrors.destination_location ? "border-red-400 bg-red-50" : ""}`}>
             <Label className="flex items-center gap-2 mb-2 text-base font-semibold">
               <MapPin className="w-5 h-5 text-red-600" />
               도착지
@@ -254,10 +282,13 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
                 좌표: {formData.destination_coordinates}
               </p>
             )}
+            {fieldErrors.destination_location && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.destination_location}</p>
+            )}
           </Card>
 
           {/* 출발 날짜 및 시간 */}
-          <Card className="p-4">
+          <Card className={`p-4 ${fieldErrors.departure_date ? "border-red-400 bg-red-50" : ""}`}>
             <Label className="flex items-center gap-2 mb-2 text-base font-semibold">
               <Calendar className="w-5 h-5 text-primary" />
               출발 일시
@@ -277,6 +308,9 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
                 className="h-12"
               />
             </div>
+            {fieldErrors.departure_date && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.departure_date}</p>
+            )}
           </Card>
 
           {/* 왕복 여부 */}
@@ -318,7 +352,7 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
           )}
 
           {/* 인원수 및 차량 대수 */}
-          <Card className="p-4">
+          <Card className={`p-4 ${fieldErrors.passenger_count || fieldErrors.capacity ? "border-red-400 bg-red-50" : ""}`}>
             <Label className="flex items-center gap-2 mb-2 text-base font-semibold">
               <Users className="w-5 h-5 text-primary" />
               인원수
@@ -328,16 +362,21 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
               min="1"
               max="500"
               value={formData.passenger_count}
-              onChange={(e) =>
+              onChange={(e) => {
                 setFormData({ ...formData, passenger_count: parseInt(e.target.value) || 1 })
-              }
-              className="h-12 text-base"
+                setFieldErrors((prev) => { const { passenger_count, capacity, ...rest } = prev; return rest })
+              }}
+              className={`h-12 text-base ${fieldErrors.passenger_count || fieldErrors.capacity ? "border-red-400" : ""}`}
             />
-            <p className="text-sm text-muted-foreground mt-2">최대 500명까지 예약 가능합니다</p>
+            {fieldErrors.passenger_count ? (
+              <p className="text-red-500 text-sm mt-2">{fieldErrors.passenger_count}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-2">최대 500명까지 예약 가능합니다</p>
+            )}
           </Card>
 
           {/* 원하는 차량 대수 */}
-          <Card className="p-4">
+          <Card className={`p-4 ${fieldErrors.vehicle_count || fieldErrors.capacity ? "border-red-400 bg-red-50" : ""}`}>
             <Label className="flex items-center gap-2 mb-2 text-base font-semibold">
               <Bus className="w-5 h-5 text-primary" />
               원하는 차량 대수
@@ -347,18 +386,25 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
               min="1"
               max="20"
               value={formData.vehicle_count}
-              onChange={(e) =>
+              onChange={(e) => {
                 setFormData({ ...formData, vehicle_count: parseInt(e.target.value) || 1 })
-              }
-              className="h-12 text-base"
+                setFieldErrors((prev) => { const { vehicle_count, capacity, ...rest } = prev; return rest })
+              }}
+              className={`h-12 text-base ${fieldErrors.vehicle_count || fieldErrors.capacity ? "border-red-400" : ""}`}
             />
-            <p className="text-sm text-muted-foreground mt-2">
-              인원수에 맞게 자동 계산되지만, 원하시는 경우 직접 지정할 수 있습니다
-            </p>
+            {fieldErrors.vehicle_count ? (
+              <p className="text-red-500 text-sm mt-2">{fieldErrors.vehicle_count}</p>
+            ) : fieldErrors.capacity ? (
+              <p className="text-red-500 text-sm mt-2">{fieldErrors.capacity}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-2">
+                인원수에 맞게 자동 계산되지만, 원하시는 경우 직접 지정할 수 있습니다
+              </p>
+            )}
           </Card>
 
           {/* 차량 타입 */}
-          <Card className="p-4">
+          <Card className={`p-4 ${fieldErrors.capacity ? "border-red-400 bg-red-50" : ""}`}>
             <Label className="flex items-center gap-2 mb-3 text-base font-semibold">
               <Bus className="w-5 h-5 text-primary" />
               차량 타입
@@ -370,7 +416,10 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
                   name="vehicle_type"
                   value="general"
                   checked={formData.vehicle_type === "general"}
-                  onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value as "general" | "solati" })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, vehicle_type: e.target.value as "general" | "solati" })
+                    setFieldErrors((prev) => { const { capacity, ...rest } = prev; return rest })
+                  }}
                   className="w-4 h-4"
                 />
                 <div className="flex-1">
@@ -384,7 +433,10 @@ export function ReservationFormComplete({ onBack, initialRoundTrip = false }: Re
                   name="vehicle_type"
                   value="solati"
                   checked={formData.vehicle_type === "solati"}
-                  onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value as "general" | "solati" })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, vehicle_type: e.target.value as "general" | "solati" })
+                    setFieldErrors((prev) => { const { capacity, ...rest } = prev; return rest })
+                  }}
                   className="w-4 h-4"
                 />
                 <div className="flex-1">

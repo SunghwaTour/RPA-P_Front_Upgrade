@@ -27,8 +27,10 @@ async function fetchAPI<T = any>(endpoint: string, options: RequestInit = {}): P
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: "Unknown error" }))
-    throw new Error(error.error || error.detail || "API request failed")
+    const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+    const err = new Error(errorData.error || errorData.detail || "API request failed") as any
+    err.field = errorData.field || null
+    throw err
   }
 
   return response.json()
