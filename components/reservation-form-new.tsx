@@ -47,6 +47,7 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
   const [quote, setQuote] = useState<QuoteResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [showQuoteResult, setShowQuoteResult] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const handleLocationSelect = (location: { name: string; coords: string }) => {
     if (locationModal.type === "departure") {
@@ -101,7 +102,30 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
   }
 
   const handleQuoteSubmit = async () => {
+    setFieldErrors({})
     setLoading(true)
+
+    // 클라이언트 사전 검증
+    const errors: Record<string, string> = {}
+    const maxCapacity = formData.vehicle_type === "solati" ? 15 : 45
+
+    if (formData.passenger_count < 1) {
+      errors.passenger_count = "인원수를 입력해주세요"
+    }
+    if (formData.vehicle_count < 1) {
+      errors.vehicle_count = "버스 대수를 입력해주세요"
+    }
+    if (formData.passenger_count > 0 && formData.vehicle_count > 0 && formData.passenger_count > formData.vehicle_count * maxCapacity) {
+      const minVehicles = Math.ceil(formData.passenger_count / maxCapacity)
+      errors.capacity = `${maxCapacity}인승 차량 ${formData.vehicle_count}대로는 ${formData.passenger_count}명을 수용할 수 없습니다. (최소 ${minVehicles}대 필요)`
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      setLoading(false)
+      return
+    }
+
     try {
       const departureDateTime = `${formData.departure_date}T${formData.departure_time}:00Z`
       const returnDateTime = formData.is_round_trip && formData.return_date
@@ -123,9 +147,13 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
 
       setQuote(quoteResponse)
       setShowQuoteResult(true)
-    } catch (error) {
-      console.error("견적 조회 오류:", error)
-      alert("견적 조회 중 오류가 발생했습니다.")
+    } catch (err: any) {
+      console.error("견적 조회 오류:", err)
+      if (err.field) {
+        setFieldErrors({ [err.field]: err.message })
+      } else {
+        setFieldErrors({ general: err.message || "견적 조회 중 오류가 발생했습니다." })
+      }
     } finally {
       setLoading(false)
     }
@@ -192,6 +220,12 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
           </p>
         </div>
 
+        {fieldErrors.general && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-4 mb-4 rounded">
+            <p className="text-sm text-red-700">{fieldErrors.general}</p>
+          </div>
+        )}
+
         <div className="px-4 space-y-4">
           {/* 출·도착지 입력 */}
           <div>
@@ -243,7 +277,10 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
             <h2 className="text-base font-bold mb-3">인원 입력</h2>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setFormData(prev => ({ ...prev, passenger_count: Math.max(0, prev.passenger_count - 1) }))}
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, passenger_count: Math.max(0, prev.passenger_count - 1) }))
+                  setFieldErrors(prev => { const { passenger_count, capacity, ...rest } = prev; return rest })
+                }}
                 className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors touch-manipulation flex-shrink-0"
                 style={{ width: '56px', height: '52px', borderRadius: '13px' }}
               >
@@ -258,20 +295,27 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
                   onChange={(e) => {
                     const value = parseInt(e.target.value) || 0
                     setFormData(prev => ({ ...prev, passenger_count: Math.min(500, Math.max(0, value)) }))
+                    setFieldErrors(prev => { const { passenger_count, capacity, ...rest } = prev; return rest })
                   }}
-                  className="w-full text-center font-bold px-2 border-2 border-gray-200 focus:outline-none focus:border-primary"
+                  className={`w-full text-center font-bold px-2 border-2 focus:outline-none focus:border-primary ${fieldErrors.passenger_count || fieldErrors.capacity ? "border-red-400 bg-red-50" : "border-gray-200"}`}
                   style={{ height: '52px', borderRadius: '13px', fontSize: '16px' }}
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ fontSize: '16px' }}>명</span>
               </div>
               <button
-                onClick={() => setFormData(prev => ({ ...prev, passenger_count: Math.min(500, prev.passenger_count + 1) }))}
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, passenger_count: Math.min(500, prev.passenger_count + 1) }))
+                  setFieldErrors(prev => { const { passenger_count, capacity, ...rest } = prev; return rest })
+                }}
                 className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors touch-manipulation flex-shrink-0"
                 style={{ width: '56px', height: '52px', borderRadius: '13px' }}
               >
                 <Plus className="w-6 h-6 text-gray-900" />
               </button>
             </div>
+            {fieldErrors.passenger_count && (
+              <p className="text-red-500 text-sm mt-2">{fieldErrors.passenger_count}</p>
+            )}
           </div>
 
           {/* 버스 유형 선택 */}
@@ -279,30 +323,40 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
             <h2 className="text-base font-bold mb-3">버스 유형 선택</h2>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setFormData(prev => ({ ...prev, vehicle_type: "general" }))}
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, vehicle_type: "general" }))
+                  setFieldErrors(prev => { const { capacity, ...rest } = prev; return rest })
+                }}
                 className={`p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                  formData.vehicle_type === "general"
-                    ? "border-primary bg-blue-50"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                  fieldErrors.capacity
+                    ? "border-red-400 bg-red-50"
+                    : formData.vehicle_type === "general"
+                      ? "border-primary bg-blue-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
                 <div className="text-center">
-                  <div className={`font-bold mb-1 ${formData.vehicle_type === "general" ? "text-primary" : "text-foreground"}`}>
+                  <div className={`font-bold mb-1 ${fieldErrors.capacity ? "text-red-600" : formData.vehicle_type === "general" ? "text-primary" : "text-foreground"}`}>
                     일반형
                   </div>
                   <div className="text-xs text-gray-600">28인승~45인승</div>
                 </div>
               </button>
               <button
-                onClick={() => setFormData(prev => ({ ...prev, vehicle_type: "solati" }))}
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, vehicle_type: "solati" }))
+                  setFieldErrors(prev => { const { capacity, ...rest } = prev; return rest })
+                }}
                 className={`p-4 rounded-lg border-2 transition-all touch-manipulation ${
-                  formData.vehicle_type === "solati"
-                    ? "border-primary bg-blue-50"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                  fieldErrors.capacity
+                    ? "border-red-400 bg-red-50"
+                    : formData.vehicle_type === "solati"
+                      ? "border-primary bg-blue-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
                 <div className="text-center">
-                  <div className={`font-bold mb-1 ${formData.vehicle_type === "solati" ? "text-primary" : "text-foreground"}`}>
+                  <div className={`font-bold mb-1 ${fieldErrors.capacity ? "text-red-600" : formData.vehicle_type === "solati" ? "text-primary" : "text-foreground"}`}>
                     고급형
                   </div>
                   <div className="text-xs text-gray-600">최대 15인승</div>
@@ -316,7 +370,10 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
             <h2 className="text-base font-bold mb-3">버스 대수 입력</h2>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setFormData(prev => ({ ...prev, vehicle_count: Math.max(0, prev.vehicle_count - 1) }))}
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, vehicle_count: Math.max(0, prev.vehicle_count - 1) }))
+                  setFieldErrors(prev => { const { vehicle_count, capacity, ...rest } = prev; return rest })
+                }}
                 className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors touch-manipulation flex-shrink-0"
                 style={{ width: '56px', height: '52px', borderRadius: '13px' }}
               >
@@ -331,20 +388,30 @@ export function ReservationFormNew({ onBack, onReservationComplete, initialRound
                   onChange={(e) => {
                     const value = parseInt(e.target.value) || 0
                     setFormData(prev => ({ ...prev, vehicle_count: Math.min(20, Math.max(0, value)) }))
+                    setFieldErrors(prev => { const { vehicle_count, capacity, ...rest } = prev; return rest })
                   }}
-                  className="w-full text-center font-bold px-2 border-2 border-gray-200 focus:outline-none focus:border-primary"
+                  className={`w-full text-center font-bold px-2 border-2 focus:outline-none focus:border-primary ${fieldErrors.vehicle_count || fieldErrors.capacity ? "border-red-400 bg-red-50" : "border-gray-200"}`}
                   style={{ height: '52px', borderRadius: '13px', fontSize: '16px' }}
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ fontSize: '16px' }}>대</span>
               </div>
               <button
-                onClick={() => setFormData(prev => ({ ...prev, vehicle_count: Math.min(20, prev.vehicle_count + 1) }))}
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, vehicle_count: Math.min(20, prev.vehicle_count + 1) }))
+                  setFieldErrors(prev => { const { vehicle_count, capacity, ...rest } = prev; return rest })
+                }}
                 className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors touch-manipulation flex-shrink-0"
                 style={{ width: '56px', height: '52px', borderRadius: '13px' }}
               >
                 <Plus className="w-6 h-6 text-gray-900" />
               </button>
             </div>
+            {fieldErrors.vehicle_count && (
+              <p className="text-red-500 text-sm mt-2">{fieldErrors.vehicle_count}</p>
+            )}
+            {fieldErrors.capacity && (
+              <p className="text-red-500 text-sm mt-2">{fieldErrors.capacity}</p>
+            )}
           </div>
 
           {/* 여정 선택 */}
